@@ -3,14 +3,14 @@
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <task-execution-report.md>"
+  echo "Uso: $0 <relatorio-execucao-tarefa.md>"
   exit 2
 fi
 
 report_file="$1"
 
 if [[ ! -f "$report_file" ]]; then
-  echo "ERROR: report file not found: $report_file"
+  echo "ERRO: arquivo de relatório não encontrado: $report_file"
   exit 2
 fi
 
@@ -21,38 +21,43 @@ require_pattern() {
   local label="$2"
 
   if ! grep -Eiq "$pattern" "$report_file"; then
-    echo "MISSING: $label"
+    echo "FALTANDO: $label"
     missing=1
   fi
 }
 
-# Required sections
-require_pattern "executed commands" "Executed commands section"
-require_pattern "changed files" "Changed files section"
-require_pattern "validation results" "Validation results section"
-require_pattern "assumptions" "Assumptions section"
-require_pattern "residual risks" "Residual risks section"
+# Contexto carregado (PRD e TechSpec)
+require_pattern "contexto carregado" "seção Contexto Carregado"
+require_pattern "PRD[[:space:]]*:" "referência ao PRD consultado"
+require_pattern "TechSpec[[:space:]]*:" "referência à TechSpec consultada"
 
-# Require a terminal canonical state
-if ! grep -Eiq "state[[:space:]]*:[[:space:]]*(blocked|failed|done)" "$report_file"; then
-  echo "MISSING: Terminal execution state (blocked|failed|done)"
+# Seções obrigatórias
+require_pattern "comandos executados" "seção Comandos Executados"
+require_pattern "arquivos alterados" "seção Arquivos Alterados"
+require_pattern "resultados de validação" "seção Resultados de Validação"
+require_pattern "suposições" "seção Suposições"
+require_pattern "riscos residuais" "seção Riscos Residuais"
+
+# Exigir um estado terminal canônico
+if ! grep -Eiq "estado[[:space:]]*:[[:space:]]*(blocked|failed|done)" "$report_file"; then
+  echo "FALTANDO: estado terminal de execução (blocked|failed|done)"
   missing=1
 fi
 
-# Test and lint evidence
-require_pattern "test(s)?[[:space:]]*:[[:space:]]*(pass|fail|blocked)" "Test evidence with result"
-require_pattern "lint[[:space:]]*:[[:space:]]*(pass|fail|blocked)" "Lint evidence with result"
+# Evidência de testes e lint
+require_pattern "testes[[:space:]]*:[[:space:]]*(pass|fail|blocked)" "evidência de testes com resultado"
+require_pattern "lint[[:space:]]*:[[:space:]]*(pass|fail|blocked)" "evidência de lint com resultado"
 
-# Reviewer verdict
-if ! grep -Eiq "reviewer verdict[[:space:]]*:[[:space:]]*(APPROVED|APPROVED_WITH_REMARKS|REJECTED|BLOCKED)" "$report_file"; then
-  echo "MISSING: Reviewer verdict with canonical enum value"
+# Veredito do revisor
+if ! grep -Eiq "veredito do revisor[[:space:]]*:[[:space:]]*(APPROVED|APPROVED_WITH_REMARKS|REJECTED|BLOCKED)" "$report_file"; then
+  echo "FALTANDO: veredito do revisor com valor canônico"
   missing=1
 fi
 
 if [[ $missing -ne 0 ]]; then
   echo ""
-  echo "Evidence bundle validation failed: $report_file"
+  echo "Validação do pacote de evidências falhou: $report_file"
   exit 1
 fi
 
-echo "Evidence bundle validation passed: $report_file"
+echo "Validação do pacote de evidências aprovada: $report_file"

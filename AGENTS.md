@@ -18,7 +18,7 @@ Use estas instruções para manter consistência, segurança e qualidade ao trab
 
 ## Diretrizes de Estrutura
 
-1. Priorize entendimento do código e do contexto atual antes de propor refactors.
+1. Priorize entendimento do código e do contexto atual antes de propor refatorações.
 2. Respeite padrões existentes de nomenclatura, organização e tratamento de erro.
 3. Defina estrutura simples, evolutiva e com defaults explícitos.
 4. Evite reescritas amplas quando uma alteração localizada resolver o problema.

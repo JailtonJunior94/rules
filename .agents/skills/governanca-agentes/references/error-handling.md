@@ -2,10 +2,10 @@
 
 - Rule ID: R-ERR-001
 - Severidade: hard
-- Escopo: Todo código Go com criação, wrapping, propagação e apresentação de erros.
+- Escopo: Todo código com criação, wrapping, propagação e apresentação de erros.
 
 ## Objetivo
-Padronizar erros para uma CLI confiável, com mensagens claras ao usuário e detalhes técnicos preservados para diagnóstico.
+Padronizar erros com mensagens claras ao usuário e detalhes técnicos preservados para diagnóstico.
 
 ## Requisitos
 
@@ -15,26 +15,24 @@ Padronizar erros para uma CLI confiável, com mensagens claras ao usuário e det
 - Mensagens internas devem ser curtas, em lowercase e estáveis.
 
 ### Wrapping
-- Usar `fmt.Errorf(... %w ...)`.
-- Preservar cadeia para `errors.Is` e `errors.As`.
-- Adapters devem adicionar contexto técnico útil: provider, comando, step, workflow, path.
+- Preservar cadeia para inspeção programática (e.g. `errors.Is`, `errors.As` em Go).
+- Adapters devem adicionar contexto técnico útil: operação, componente, path.
 
-### Apresentação na CLI
-- A camada de terminal deve traduzir erro técnico em mensagem acionável.
+### Apresentação
+- A camada de apresentação deve traduzir erro técnico em mensagem acionável.
 - Mensagens ao usuário devem dizer o que falhou, onde falhou e qual ação é possível.
-- Erros de provider devem informar binário esperado, timeout, exit code ou step afetado quando relevante.
 
 ### Retry e Remediação
-- Retry automático deve ser restrito a casos previstos, como JSON inválido corrigível ou falha transitória de provider.
-- O número máximo padrão de retries automáticos por step deve ser 2.
-- Se remediação automática falhar, o runtime deve pausar para HITL ou encerrar de forma explícita.
+- Retry automático deve ser restrito a casos previstos e falhas transitórias.
+- Número máximo padrão de retries automáticos: 2.
+- Se remediação automática falhar, pausar para intervenção ou encerrar de forma explícita.
 
 ### Comparação
-- Usar `errors.Is` e `errors.As`.
-- Não comparar erro com `==`, exceto `nil`.
+- Usar mecanismos idiomáticos de comparação de erros da linguagem.
+- Não comparar erro por string quando existir alternativa tipada.
 
 ## Proibido
-- `panic` para erro recuperável.
+- `panic` (ou equivalente) para erro recuperável.
 - Engolir erro de IO, subprocesso, persistência ou validação.
 - Exibir stack trace bruto por padrão ao usuário final.
 - Mensagens vagas como `something went wrong`.

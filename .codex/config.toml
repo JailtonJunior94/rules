@@ -5,3 +5,27 @@ enabled = true
 [[skills.config]]
 path = ".agents/skills/implementacao-go"
 enabled = true
+
+[[skills.config]]
+path = ".agents/skills/criar-prd"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/criar-especificacao-tecnica"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/criar-tarefas"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/executar-tarefa"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/refatorar"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/revisar"
+enabled = true
