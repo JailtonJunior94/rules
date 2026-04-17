@@ -36,6 +36,10 @@ Para tarefas que alteram código Go, carregar também:
 
 - `.agents/skills/implementacao-go/SKILL.md`
 
+Para tarefas de revisão ou refatoração incremental de design em Go guiadas por heurísticas de object calisthenics, carregar também:
+
+- `.agents/skills/object-calisthenics-go/SKILL.md`
+
 Essa skill define:
 
 - base obrigatória de governança para análise, alteração e validação
@@ -62,7 +66,21 @@ Ler conforme necessidade:
 - `.agents/skills/implementacao-go/references/generics.md`
 - `.agents/skills/implementacao-go/references/concorrencia.md`
 - `.agents/skills/implementacao-go/references/design-patterns.md`
+- `.agents/skills/implementacao-go/references/observability.md`
+- `.agents/skills/implementacao-go/references/api.md`
+- `.agents/skills/implementacao-go/references/persistence.md`
+- `.agents/skills/implementacao-go/references/configuration.md`
+- `.agents/skills/implementacao-go/references/resiliencia.md`
+- `.agents/skills/implementacao-go/references/messaging.md`
 - `.agents/skills/implementacao-go/references/exemplos-implementacao.md`
+
+## Referências da Skill Object Calisthenics Go
+
+Ler conforme necessidade:
+
+- `.agents/skills/object-calisthenics-go/references/regras.md`
+- `.agents/skills/object-calisthenics-go/references/mapeamento-go.md`
+- `.agents/skills/object-calisthenics-go/references/roteiro-avaliacao.md`
 
 ## Validação
 

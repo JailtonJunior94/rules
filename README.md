@@ -2,6 +2,8 @@
 
 Base minima de regras compartilhadas para uso com agentes de IA em diferentes CLIs.
 
+O instalador agora gera `AGENTS.md` e os adaptadores de forma contextual a partir da estrutura real do projeto alvo, em vez de apenas copiar arquivos estaticos.
+
 ## Estrutura
 
 ```
@@ -14,6 +16,7 @@ Base minima de regras compartilhadas para uso com agentes de IA em diferentes CL
   revisar/                               <- revisao de codigo
   governanca-agentes/                    <- regras transversais (DDD, seguranca, erros, testes)
   implementacao-go/                      <- regras e referencias para Go
+  object-calisthenics-go/                <- heuristicas de object calisthenics adaptadas para Go
 
 AGENTS.md                                <- regra canonica compartilhada
 CLAUDE.md                                <- adaptador para Claude Code
@@ -42,6 +45,27 @@ GEMINI.md                                <- adaptador para Gemini CLI
 ## Principio
 
 O processo detalhado mora na habilidade canonica em `.agents/skills/`. Comandos, agentes e adaptadores por plataforma apenas roteiam para a habilidade adequada — nunca duplicam o conteudo.
+
+## Instalacao
+
+Uso padrao:
+
+```bash
+bash install.sh /caminho/do/projeto
+```
+
+Opcoes uteis:
+
+- `LINK_MODE=symlink`: modo padrao, mais economico para manter uma unica fonte de verdade.
+- `LINK_MODE=copy`: modo mais portavel para ambientes com restricao a symlink.
+- `GENERATE_CONTEXTUAL_GOVERNANCE=1`: modo padrao; detecta arquitetura, stack e comandos de validacao para gerar `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` e `.github/copilot-instructions.md`.
+- `GENERATE_CONTEXTUAL_GOVERNANCE=0`: fallback para copiar os arquivos canonicos sem personalizacao.
+
+Exemplo portavel:
+
+```bash
+LINK_MODE=copy bash install.sh /caminho/do/projeto
+```
 
 ---
 
@@ -191,6 +215,22 @@ ou via subagente:
 
 ```
 Leia .agents/skills/executar-tarefa/SKILL.md e implemente docs/tasks/task-001.md
+```
+
+---
+
+### Object Calisthenics Go
+
+Aplica heuristicas de object calisthenics de forma incremental e idiomatica em codigo Go, com foco em review e refatoracao segura.
+
+**Codex CLI**
+
+```
+Leia .agents/skills/object-calisthenics-go/SKILL.md e revise internal/payment/service.go propondo a menor refatoracao segura
+```
+
+```
+Leia .agents/skills/object-calisthenics-go/SKILL.md e refatore pkg/order/order.go para reduzir branching e melhorar encapsulamento sem quebrar contratos
 ```
 
 ---

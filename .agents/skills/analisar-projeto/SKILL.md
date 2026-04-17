@@ -60,13 +60,14 @@ description: Analisa a arquitetura de um projeto (monolito, monolito modular, mo
 
 **Etapa 6: Gerar AGENTS.md personalizado**
 1. Ler `assets/agents-template.md` como base.
-2. Adaptar o conteudo ao tipo de arquitetura detectado:
+2. Quando o contexto permitir automacao local, preferir `scripts/generate-governance.sh` para materializar os arquivos a partir da deteccao real do projeto.
+3. Adaptar o conteudo ao tipo de arquitetura detectado:
    - Para **monorepo**: incluir regras de fronteira entre pacotes/servicos, resolucao de dependencias internas e validacao por workspace afetado.
    - Para **monolito modular**: incluir regras de fronteira entre modulos, proibicao de dependencias circulares e respeito a bounded contexts.
    - Para **monolito**: incluir regras de coesao, separacao de camadas e prevencao de acoplamento excessivo.
    - Para **microservico**: incluir regras de contrato de API, independencia de deploy e comunicacao entre servicos.
-3. Incluir secao de validacao com comandos reais detectados no projeto (ex: `go test ./...`, `npm test`, `pytest`).
-4. Incluir secao de referencias apontando para `.agents/skills/` quando o install.sh tiver sido usado.
+4. Incluir secao de validacao com comandos reais detectados no projeto (ex: `go test ./...`, `npm test`, `pytest`).
+5. Incluir secao de referencias apontando para `.agents/skills/` quando o install.sh tiver sido usado.
 
 **Etapa 7: Gerar arquivos por ferramenta**
 1. Para cada ferramenta detectada na Etapa 4, gerar o arquivo correspondente:

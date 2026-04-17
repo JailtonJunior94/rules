@@ -1,0 +1,66 @@
+---
+name: object-calisthenics-go
+description: Applies object calisthenics heuristics to Go code through small, behavior-preserving refactorings, review criteria, and validation steps adapted to packages, structs, interfaces, methods, and error handling. Use when Go code needs incremental design improvement, lower complexity, narrower responsibilities, or rule-based review guidance. Don't use for feature scoping, framework migration, broad rewrites, or changes that require public API breaks without explicit approval.
+---
+
+# Object Calisthenics Go
+
+## Procedimentos
+
+**Step 1: Carregar a base obrigatoria**
+1. Ler `AGENTS.md`.
+2. Ler `.agents/skills/governanca-agentes/SKILL.md` antes de alterar codigo.
+3. Ler `.agents/skills/implementacao-go/SKILL.md` antes de alterar codigo Go.
+4. Executar `bash scripts/list-go-files.sh` para confirmar a superficie Go candidata dentro do contexto atual.
+5. Parar se nao houver arquivos Go relevantes ou se a solicitacao nao estiver limitada o suficiente para uma mudanca segura.
+
+**Step 2: Delimitar o alvo da calibragem**
+1. Identificar o menor conjunto de arquivos, tipos, funcoes e testes que concentra o problema.
+2. Mapear comportamento publico, invariantes, dependencias, pontos de integracao e risco de regressao.
+3. Classificar a solicitacao em um dos modos:
+   - `review`: avaliar o desenho atual sem editar
+   - `execution`: aplicar refatoracao incremental
+4. Tratar o modo como `review` por padrao quando a solicitacao nao pedir alteracao explicita.
+
+**Step 3: Carregar apenas as referencias necessarias**
+1. Ler `references/regras.md` para interpretar as regras adaptadas para Go.
+2. Ler `references/mapeamento-go.md` quando a duvida estiver em como traduzir uma heuristica para packages, structs, interfaces, errors, slices, maps ou funcoes.
+3. Ler `references/roteiro-avaliacao.md` quando for necessario estruturar um parecer, uma lista de findings ou um plano de refatoracao.
+4. Ler `assets/resultado-template.md` apenas quando for preciso materializar a saida final em formato consistente.
+
+**Step 4: Avaliar antes de refatorar**
+1. Confirmar quais regras melhoram clareza e isolamento no contexto real.
+2. Tratar as regras como heuristicas e nao como restricoes absolutas.
+3. Preservar contratos publicos, nomes estaveis, semantica de erro e comportamento observavel, salvo quando a mudanca explicitar o contrario.
+4. Priorizar a menor mudanca segura que reduza complexidade acidental.
+5. Evitar aplicar varias regras ao mesmo tempo quando uma unica extracao, renomeacao ou separacao resolver o problema dominante.
+
+**Step 5: Executar a melhoria em modo incremental**
+1. Em `review`:
+   - identificar quais regras estao sendo violadas de forma material
+   - apontar risco, impacto e menor ajuste seguro
+   - evitar recomendacoes vagas como "usar clean architecture" sem necessidade concreta
+2. Em `execution`:
+   - aplicar a menor refatoracao segura por vez
+   - preferir extracao de funcao, extracao de tipo, encapsulamento local, composicao simples e reducao de branching
+   - atualizar ou adicionar testes quando houver risco de regressao
+   - interromper se a proxima melhoria exigir quebra de API publica, mudanca transversal ou redesenho amplo
+
+**Step 6: Validar de forma proporcional**
+1. Rodar formatter nos arquivos alterados.
+2. Rodar primeiro testes direcionados aos packages afetados.
+3. Rodar testes mais amplos quando o custo for proporcional ao risco.
+4. Rodar lint quando o projeto oferecer esse passo.
+5. Registrar falhas com comando exato e diagnostico curto.
+
+**Step 7: Retornar a conclusao**
+1. Informar o modo aplicado, as regras mais relevantes, os arquivos afetados e a validacao executada.
+2. Explicitar quando uma recomendacao foi rejeitada por custo, risco, idiomatismo Go ou preservacao de contrato.
+3. Se produzir um parecer estruturado, usar `assets/resultado-template.md` como base.
+
+## Error Handling
+* Se `bash scripts/list-go-files.sh` nao encontrar arquivos Go, parar antes de assumir que a skill se aplica.
+* Se a codebase depender de estilo idiomatico Go que conflite com uma heuristica classica, priorizar o idiomatismo local e registrar a adaptacao.
+* Se uma regra empurrar a solucao para indirecao, excesso de interfaces ou fragmentacao artificial, recuar e manter a alternativa mais simples.
+* Se nao houver testes suficientes para sustentar uma refatoracao arriscada, reduzir o escopo ou adicionar cobertura antes de prosseguir.
+* Se a solicitacao pedir varias regras ao mesmo tempo em uma area grande do sistema, decompor por package, agregado ou fluxo e executar iterativamente.

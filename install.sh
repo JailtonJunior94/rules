@@ -9,6 +9,9 @@ set -euo pipefail
 RULES_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="${1:-.}"
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
+LINK_MODE="${LINK_MODE:-symlink}"
+GENERATE_CONTEXTUAL_GOVERNANCE="${GENERATE_CONTEXTUAL_GOVERNANCE:-1}"
+GOVERNANCE_GENERATOR="$RULES_DIR/.agents/skills/analisar-projeto/scripts/generate-governance.sh"
 
 if [[ "$RULES_DIR" == "$PROJECT_DIR" ]]; then
   echo "ERRO: o diretório destino não pode ser o próprio repositório de regras."
@@ -16,6 +19,37 @@ if [[ "$RULES_DIR" == "$PROJECT_DIR" ]]; then
 fi
 
 SKILLS=(criar-prd criar-especificacao-tecnica criar-tarefas executar-tarefa refatorar revisar analisar-projeto)
+
+link_or_copy_dir() {
+  local source="$1"
+  local destination="$2"
+
+  mkdir -p "$(dirname "$destination")"
+
+  if [[ "$LINK_MODE" == "copy" ]]; then
+    rm -rf "$destination"
+    cp -R "$source" "$destination"
+    return
+  fi
+
+  ln -sfn "$source" "$destination"
+}
+
+link_or_copy_skill() {
+  local source_abs="$1"
+  local link_target="$2"
+  local destination="$3"
+
+  mkdir -p "$(dirname "$destination")"
+
+  if [[ "$LINK_MODE" == "copy" ]]; then
+    rm -rf "$destination"
+    cp -R "$source_abs" "$destination"
+    return
+  fi
+
+  ln -sfn "$link_target" "$destination"
+}
 
 # ── Seleção de ferramentas ──────────────────────────────────────────
 INSTALL_CLAUDE=0
@@ -65,18 +99,16 @@ echo "Ferramentas selecionadas:$selected"
 echo ""
 
 # ── Base comum (AGENTS.md + skills canônicas) ───────────────────────
-cp "$RULES_DIR/AGENTS.md" "$PROJECT_DIR/AGENTS.md"
 mkdir -p "$PROJECT_DIR/.agents"
-ln -sfn "$RULES_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills"
+link_or_copy_dir "$RULES_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills"
 
 # ── Claude Code ─────────────────────────────────────────────────────
 if [[ $INSTALL_CLAUDE -eq 1 ]]; then
   echo "→ Instalando Claude Code..."
   mkdir -p "$PROJECT_DIR/.claude/skills" "$PROJECT_DIR/.claude/agents" "$PROJECT_DIR/.claude/rules" "$PROJECT_DIR/.claude/scripts"
   for skill in "${SKILLS[@]}"; do
-    ln -sfn "../../.agents/skills/$skill" "$PROJECT_DIR/.claude/skills/$skill"
+    link_or_copy_skill "$RULES_DIR/.agents/skills/$skill" "../../.agents/skills/$skill" "$PROJECT_DIR/.claude/skills/$skill"
   done
-  cp "$RULES_DIR/CLAUDE.md" "$PROJECT_DIR/CLAUDE.md"
   cp "$RULES_DIR/.claude/rules/governance.md" "$PROJECT_DIR/.claude/rules/governance.md"
   cp "$RULES_DIR/.claude/agents/"*.md "$PROJECT_DIR/.claude/agents/"
   cp "$RULES_DIR/.claude/scripts/validate-task-evidence.sh" "$PROJECT_DIR/.claude/scripts/"
@@ -86,7 +118,6 @@ fi
 if [[ $INSTALL_GEMINI -eq 1 ]]; then
   echo "→ Instalando Gemini CLI..."
   mkdir -p "$PROJECT_DIR/.gemini/commands"
-  cp "$RULES_DIR/GEMINI.md" "$PROJECT_DIR/GEMINI.md"
   cp "$RULES_DIR/.gemini/commands/"*.toml "$PROJECT_DIR/.gemini/commands/"
 fi
 
@@ -102,12 +133,25 @@ if [[ $INSTALL_COPILOT -eq 1 ]]; then
   echo "→ Instalando Copilot..."
   mkdir -p "$PROJECT_DIR/.github/skills" "$PROJECT_DIR/.github/agents"
   for skill in "${SKILLS[@]}"; do
-    ln -sfn "../../.agents/skills/$skill" "$PROJECT_DIR/.github/skills/$skill"
+    link_or_copy_skill "$RULES_DIR/.agents/skills/$skill" "../../.agents/skills/$skill" "$PROJECT_DIR/.github/skills/$skill"
   done
-  cp "$RULES_DIR/.github/copilot-instructions.md" "$PROJECT_DIR/.github/copilot-instructions.md"
   cp "$RULES_DIR/.github/agents/"*.md "$PROJECT_DIR/.github/agents/" 2>/dev/null || \
   cp "$RULES_DIR/.github/agents/"*.agent.md "$PROJECT_DIR/.github/agents/"
 fi
 
+if [[ "$GENERATE_CONTEXTUAL_GOVERNANCE" == "1" ]]; then
+  echo "→ Gerando governanca contextual..."
+  INSTALL_CLAUDE="$INSTALL_CLAUDE" \
+  INSTALL_GEMINI="$INSTALL_GEMINI" \
+  INSTALL_COPILOT="$INSTALL_COPILOT" \
+  bash "$GOVERNANCE_GENERATOR" "$PROJECT_DIR"
+else
+  cp "$RULES_DIR/AGENTS.md" "$PROJECT_DIR/AGENTS.md"
+  [[ $INSTALL_CLAUDE -eq 1 ]] && cp "$RULES_DIR/CLAUDE.md" "$PROJECT_DIR/CLAUDE.md"
+  [[ $INSTALL_GEMINI -eq 1 ]] && cp "$RULES_DIR/GEMINI.md" "$PROJECT_DIR/GEMINI.md"
+  [[ $INSTALL_COPILOT -eq 1 ]] && cp "$RULES_DIR/.github/copilot-instructions.md" "$PROJECT_DIR/.github/copilot-instructions.md"
+fi
+
 echo ""
 echo "Governança IA-First instalada em: $PROJECT_DIR"
+echo "Modo de instalacao da base canonica: $LINK_MODE"

@@ -7,6 +7,10 @@ path = ".agents/skills/implementacao-go"
 enabled = true
 
 [[skills.config]]
+path = ".agents/skills/analisar-projeto"
+enabled = true
+
+[[skills.config]]
 path = ".agents/skills/criar-prd"
 enabled = true
 

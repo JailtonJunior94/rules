@@ -21,7 +21,15 @@ description: Implementa alteracoes em codigo Go usando governanca base, arquitet
 2. Ler `references/generics.md` quando a tarefa introduzir ou alterar parametros de tipo, constraints ou componentes reutilizaveis com generics.
 3. Ler `references/concorrencia.md` quando a tarefa usar goroutines, channels, cancelamento, worker pools ou sincronizacao.
 4. Ler `references/design-patterns.md` quando a tarefa expor um problema recorrente de desenho que nao seja resolvido com tipos concretos, composicao simples ou extracao de metodo.
-5. Ler `references/exemplos-implementacao.md` apenas quando um esqueleto concreto destravar a implementacao ou os testes.
+5. Ler `references/observability.md` quando a tarefa envolver logging, tracing, metricas ou health checks.
+6. Ler `references/api.md` quando a tarefa envolver handlers HTTP/gRPC, middlewares, DTOs, serializacao ou graceful shutdown.
+7. Ler `references/persistence.md` quando a tarefa envolver repositories, transactions, migrations, queries ou connection management.
+8. Ler `references/configuration.md` quando a tarefa envolver carregamento de configuracao, variáveis de ambiente ou inicializacao de dependencias.
+9. Ler `references/resiliencia.md` quando a tarefa envolver retries, circuit breakers, timeouts em chamadas externas, fallbacks ou protecao contra falhas transitórias.
+10. Ler `references/messaging.md` quando a tarefa envolver produção ou consumo de mensagens, eventos, filas, tópicos, outbox pattern ou idempotência de consumidores.
+11. Ler `references/seguranca.md` quando a tarefa envolver autenticação, autorização, validação de input, rate limiting, CORS ou tratamento de segredos.
+12. Ler `references/testes.md` quando a tarefa envolver estratégia de testes, integration tests, testcontainers, fixtures ou cobertura.
+13. Ler `references/exemplos-implementacao.md` apenas quando um esqueleto concreto destravar a implementacao ou os testes.
 
 **Step 3: Modelar a alteracao**
 1. Identificar o menor conjunto seguro de mudancas que satisfaz a solicitacao.

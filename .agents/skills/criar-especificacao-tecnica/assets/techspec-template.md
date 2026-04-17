@@ -65,9 +65,19 @@ type ServiceName interface {
 
 ### Testes de Integração
 
-[Se necessário, descreva testes de integração:
+> **Decisão necessária:** Este projeto precisa de integration tests?
+> Avaliar os critérios abaixo antes de decidir:
+> - [ ] O projeto tem fronteiras de IO críticas (banco, fila, cache) onde mocks não garantem correção?
+> - [ ] Já houve incidente onde unit tests passaram mas a integração real falhou?
+> - [ ] O custo de manter containers de teste (testcontainers) é proporcional ao risco coberto?
+>
+> Se a resposta for "sim" para pelo menos duas, integration tests são recomendados.
+> Se adotados, usar [testcontainers-go](https://golang.testcontainers.org/) com build tag `//go:build integration`.
+
+[Se adotados, descreva testes de integração:
 
 - Componentes a testar juntos
+- Dependências reais a provisionar (Postgres, Redis, Kafka, etc.)
 - Requisitos de dados de teste]
 
 ### Testes E2E
