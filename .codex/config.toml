@@ -1,0 +1,7 @@
+[[skills.config]]
+path = ".agents/skills/governanca-agentes"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/implementacao-go"
+enabled = true
