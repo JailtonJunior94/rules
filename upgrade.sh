@@ -211,7 +211,9 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
       echo "    -> symlink detectado, pulando copia (atualiza automaticamente)"
       continue
     fi
-    cp -R "$SOURCE_DIR/.agents/skills/$skill_name/" "$PROJECT_DIR/.agents/skills/$skill_name/"
+    rm -rf "$PROJECT_DIR/.agents/skills/$skill_name"
+    mkdir -p "$(dirname "$PROJECT_DIR/.agents/skills/$skill_name")"
+    cp -R "$SOURCE_DIR/.agents/skills/$skill_name" "$PROJECT_DIR/.agents/skills/$skill_name"
     echo "    -> atualizado"
   fi
 done

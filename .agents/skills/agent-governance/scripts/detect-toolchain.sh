@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Detecta comandos de fmt, test e lint disponiveis no projeto.
+# Detecta comandos de fmt, test e lint recomendados para o projeto.
 # Suporta multiplas linguagens simultaneamente (inclusive manifests em subdiretorios).
 # Uso: bash detect-toolchain.sh [diretorio] [paths-afetados-separados-por-virgula]
 # Variaveis opcionais:
@@ -242,13 +242,9 @@ entries=()
 if [[ -f "go.mod" ]] || [[ -f "go.work" ]] || find_manifests "go.mod" 4 | read -r _; then
   go_fmt="gofmt -w ."
   go_test="go test ./..."
-  go_lint=""
-
-  if command -v golangci-lint >/dev/null 2>&1; then
-    go_lint="golangci-lint run"
-  elif [[ -f ".golangci.yml" ]] || [[ -f ".golangci.yaml" ]] || [[ -f ".golangci.toml" ]]; then
-    go_lint="golangci-lint run"
-  fi
+  # Para Go, usar uma recomendacao estatica evita que a saida mude
+  # conforme o host do agente tenha ou nao o binario instalado.
+  go_lint="golangci-lint run"
 
   entries+=("$(json_entry "go" "$go_fmt" "$go_test" "$go_lint")")
 fi

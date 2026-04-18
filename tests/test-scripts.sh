@@ -178,6 +178,11 @@ if output="$(bash "$DETECT_TOOLCHAIN" "$ROOT_DIR/tests/fixtures/go-microservice"
   else
     fail "detect-toolchain: Go project nao retorna go test"
   fi
+  if echo "$output" | grep -q '"lint":"golangci-lint run"'; then
+    pass "detect-toolchain: Go project retorna lint deterministico"
+  else
+    fail "detect-toolchain: Go project nao retorna lint deterministico"
+  fi
 else
   fail "detect-toolchain: Go project falhou"
 fi
