@@ -26,7 +26,11 @@ description: Orquestra regras de governanca, DDD, tratamento de erros, seguranca
 4. Atualizar ou adicionar testes quando houver mudanca de comportamento.
 
 **Etapa 4: Validar proporcionalmente**
-1. Seguir `references/validation-steps.md`.
+1. Rodar formatter nos arquivos alterados quando a stack oferecer esse passo.
+2. Rodar primeiro testes direcionados aos packages ou modulos afetados.
+3. Rodar testes mais amplos e lint quando o custo for proporcional ao risco.
+4. Registrar falhas com o comando exato e um diagnostico curto.
+5. Se o projeto oferecer `detect-toolchain.sh`, usar os comandos retornados em vez de adivinhar.
 
 ## Tratamento de Erros
 * Se a tarefa nao deixar claro quais referencias carregar, aplicar `AGENTS.md` como baseline e ler apenas os arquivos tematicos diretamente ligados a superficie alterada.

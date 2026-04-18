@@ -30,7 +30,7 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 **Etapa 4: Corrigir e testar**
 1. Aplicar a menor mudanca segura focada na causa raiz.
 2. Criar um teste de regressao para cada bug corrigido que reproduza `reproduction` e valide `expected`.
-3. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+3. Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 4. Se a validacao falhar, analisar o log e tentar apenas uma remediacao limitada adicional para o mesmo bug.
 5. Se o limite de duas tentativas por bug for excedido, marcar o bug como `failed`, registrar o diagnostico e seguir para o proximo bug elegivel.
 

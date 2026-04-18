@@ -31,7 +31,7 @@ description: Planeja ou executa refatorações incrementais seguras preservando 
    - adicionar ou atualizar testes quando o comportamento puder regredir
 
 **Etapa 4: Validar não regressão**
-1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+1. Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 2. Se a validação falhar, tentar apenas uma remediação limitada.
 
 **Etapa 5: Revisar e persistir evidências**

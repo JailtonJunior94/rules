@@ -91,7 +91,7 @@ Cada skill lista suas proprias referencias em `references/` com gatilhos de carr
 
 Antes de concluir uma alteracao:
 
-Seguir `.agents/skills/agent-governance/references/validation-steps.md` como base canonica.
+Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md` como base canonica.
 
 Comandos especificos do projeto (Go):
 1. Rodar `gofmt` nos arquivos Go alterados.

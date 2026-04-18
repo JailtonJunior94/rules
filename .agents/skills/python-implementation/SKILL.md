@@ -16,6 +16,10 @@ description: Implementa alteracoes em codigo Python usando governanca base, conv
 **Etapa 2: Selecionar apenas o contexto necessario**
 1. Ler `references/conventions.md` quando a tarefa envolver estrutura de projeto, organizacao de modulos ou padroes de importacao.
 2. Ler `references/testing.md` quando a tarefa envolver estrategia de testes, fixtures ou cobertura.
+3. Ler `references/error-handling.md` quando a tarefa criar, propagar, encapsular ou apresentar erros.
+4. Ler `references/api.md` quando a tarefa envolver handlers HTTP, middlewares, DTOs, validacao de request ou serializacao.
+5. Ler `references/patterns.md` quando a tarefa envolver dependency injection, repository, dataclasses, strategy ou organizacao de modulos.
+6. Ler `references/observability.md` quando a tarefa envolver logging, tracing, metricas ou health checks.
 
 **Etapa 3: Modelar a alteracao**
 1. Identificar o menor conjunto seguro de mudancas que satisfaz a solicitacao.
@@ -29,7 +33,7 @@ description: Implementa alteracoes em codigo Python usando governanca base, conv
 3. Adaptar exemplos ao contexto real em vez de replica-los literalmente.
 
 **Etapa 5: Validar**
-1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+1. Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 2. Em Python, preferir `ruff` para lint e format quando disponivel; caso contrario, `black` + `flake8` ou o toolchain do projeto.
 
 ## Tratamento de Erros

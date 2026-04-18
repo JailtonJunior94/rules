@@ -28,7 +28,7 @@ Use estas instruções para manter consistência, segurança e qualidade ao trab
 
 ## Contrato de carga base
 
-Toda skill que altera código deve carregar, como primeiro passo, a seguinte base obrigatória — não repetir essa instrução em cada SKILL.md individual:
+Toda skill que altera código deve carregar, como primeiro passo, a seguinte base obrigatória — essa instrução é reforçada em cada SKILL.md como medida defensiva:
 
 1. Ler este `AGENTS.md`.
 2. Ler `.agents/skills/agent-governance/SKILL.md`.
@@ -65,7 +65,7 @@ Cada skill lista suas próprias referências em `references/` com gatilhos de ca
 
 ## Validação
 
-Antes de concluir uma alteração, seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+Antes de concluir uma alteração, seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 
 ## Restrições
 

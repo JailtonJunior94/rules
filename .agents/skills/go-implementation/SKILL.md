@@ -10,11 +10,10 @@ description: Implementa alteracoes em codigo Go usando governanca base, arquitet
 
 **Etapa 1: Carregar base obrigatoria**
 1. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido.
-2. Ler `references/governance.md`.
-4. Ler `references/architecture.md`.
-5. Ler `references/go-standards.md`.
-6. Executar `bash scripts/verify-go-mod.sh`.
-7. Ler `go.mod` quando ele existir no contexto analisado.
+2. Ler `references/architecture.md`.
+3. Ler `references/go-standards.md`.
+4. Executar `bash scripts/verify-go-mod.sh`.
+5. Ler `go.mod` quando ele existir no contexto analisado.
 
 **Etapa 2: Selecionar apenas o contexto necessario**
 1. Ler `references/interfaces.md` quando a tarefa introduzir, remover ou remodelar interfaces, construtores ou fronteiras de dependencia.
@@ -51,7 +50,7 @@ description: Implementa alteracoes em codigo Go usando governanca base, arquitet
 4. Adaptar exemplos ao contexto real em vez de replica-los literalmente.
 
 **Etapa 5: Validar**
-1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+1. Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 2. Em Go, preferir `gofmt` como formatter e `golangci-lint run` como lint quando disponiveis.
 
 ## Tratamento de Erros

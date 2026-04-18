@@ -31,7 +31,7 @@ description: Executa uma tarefa de implementação aprovada por meio de codifica
 6. Parar com `needs_input` se uma decisão obrigatória ou entrada faltante bloquear a conclusão segura.
 
 **Etapa 4: Executar a etapa de validação e aprovação**
-1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+1. Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 2. Rodar os comandos de teste e lint do projeto inteiro quando o escopo da tarefa justificar.
 3. Verificar cada critério de aceitação com evidência explícita.
 5. Invocar a habilidade `review` para o diff produzido e incluir `prd.md` e `techspec.md` como contexto de revisão.

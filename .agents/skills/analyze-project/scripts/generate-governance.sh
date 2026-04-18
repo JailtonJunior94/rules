@@ -328,7 +328,7 @@ build_language_references() {
 build_validation_commands() {
   local lines=()
 
-  lines+=("Seguir \`.agents/skills/agent-governance/references/validation-steps.md\` como base canonica.")
+  lines+=("Seguir Etapa 4 de \`.agents/skills/agent-governance/SKILL.md\` como base canonica.")
   lines+=("")
 
   if should_include_go && file_exists "go.mod"; then

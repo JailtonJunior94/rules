@@ -1,0 +1,9 @@
+description = "Corrige bugs pela causa raiz usando a habilidade canônica bugfix."
+prompt = """
+Use `.agents/skills/bugfix/SKILL.md` como fluxo canônico desta tarefa.
+Leia os assets referenciados sob demanda, especialmente `.agents/skills/bugfix/assets/bugfix-report-template.md`.
+Não invente um processo paralelo neste comando.
+
+Aplicar a habilidade a esta solicitação:
+{{args}}
+"""

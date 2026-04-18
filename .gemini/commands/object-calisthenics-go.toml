@@ -1,0 +1,9 @@
+description = "Aplica heurísticas de object calisthenics em código Go usando a habilidade canônica."
+prompt = """
+Use `.agents/skills/object-calisthenics-go/SKILL.md` como fluxo canônico desta tarefa.
+Leia os assets e references sob demanda conforme descrito no SKILL.md.
+Não invente um processo paralelo neste comando.
+
+Aplicar a habilidade a esta solicitação:
+{{args}}
+"""

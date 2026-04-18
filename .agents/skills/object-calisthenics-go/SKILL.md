@@ -47,7 +47,7 @@ description: Aplica heuristicas de object calisthenics em codigo Go por meio de 
    - interromper se a proxima melhoria exigir quebra de API publica, mudanca transversal ou redesenho amplo
 
 **Etapa 6: Validar de forma proporcional**
-1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+1. Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md`.
 
 **Etapa 7: Retornar a conclusao**
 1. Informar o modo aplicado, as regras mais relevantes, os arquivos afetados e a validacao executada.
