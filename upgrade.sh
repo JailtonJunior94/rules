@@ -144,7 +144,81 @@ if [[ "$CHECK_ONLY" -eq 1 && $((OUTDATED + MISSING)) -gt 0 ]]; then
   exit 1
 fi
 
-# --verify: re-gerar governanca contextual se AGENTS.md existir e houve atualizacoes
+# Atualizar adaptadores quando houve atualizacoes de skills
+if [[ "$CHECK_ONLY" -eq 0 && "$OUTDATED" -gt 0 ]]; then
+  ADAPTERS_UPDATED=0
+
+  # Claude agents
+  if [[ -d "$PROJECT_DIR/.claude/agents" && -d "$SOURCE_DIR/.claude/agents" ]]; then
+    for agent_file in "$SOURCE_DIR/.claude/agents/"*.md; do
+      [[ -f "$agent_file" ]] || continue
+      local_name="$(basename "$agent_file")"
+      target_file="$PROJECT_DIR/.claude/agents/$local_name"
+      if [[ ! -f "$target_file" ]] || ! diff -q "$agent_file" "$target_file" > /dev/null 2>&1; then
+        cp "$agent_file" "$target_file"
+        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
+      fi
+    done
+  fi
+
+  # Claude rules
+  if [[ -d "$PROJECT_DIR/.claude/rules" && -d "$SOURCE_DIR/.claude/rules" ]]; then
+    for rule_file in "$SOURCE_DIR/.claude/rules/"*.md; do
+      [[ -f "$rule_file" ]] || continue
+      local_name="$(basename "$rule_file")"
+      target_file="$PROJECT_DIR/.claude/rules/$local_name"
+      if [[ ! -f "$target_file" ]] || ! diff -q "$rule_file" "$target_file" > /dev/null 2>&1; then
+        cp "$rule_file" "$target_file"
+        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
+      fi
+    done
+  fi
+
+  # Claude scripts
+  if [[ -d "$PROJECT_DIR/.claude/scripts" && -d "$SOURCE_DIR/.claude/scripts" ]]; then
+    for script_file in "$SOURCE_DIR/.claude/scripts/"*; do
+      [[ -f "$script_file" ]] || continue
+      local_name="$(basename "$script_file")"
+      target_file="$PROJECT_DIR/.claude/scripts/$local_name"
+      if [[ ! -f "$target_file" ]] || ! diff -q "$script_file" "$target_file" > /dev/null 2>&1; then
+        cp "$script_file" "$target_file"
+        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
+      fi
+    done
+  fi
+
+  # Gemini commands
+  if [[ -d "$PROJECT_DIR/.gemini/commands" && -d "$SOURCE_DIR/.gemini/commands" ]]; then
+    for cmd_file in "$SOURCE_DIR/.gemini/commands/"*.toml; do
+      [[ -f "$cmd_file" ]] || continue
+      local_name="$(basename "$cmd_file")"
+      target_file="$PROJECT_DIR/.gemini/commands/$local_name"
+      if [[ ! -f "$target_file" ]] || ! diff -q "$cmd_file" "$target_file" > /dev/null 2>&1; then
+        cp "$cmd_file" "$target_file"
+        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
+      fi
+    done
+  fi
+
+  # GitHub agents
+  if [[ -d "$PROJECT_DIR/.github/agents" && -d "$SOURCE_DIR/.github/agents" ]]; then
+    for agent_file in "$SOURCE_DIR/.github/agents/"*.agent.md; do
+      [[ -f "$agent_file" ]] || continue
+      local_name="$(basename "$agent_file")"
+      target_file="$PROJECT_DIR/.github/agents/$local_name"
+      if [[ ! -f "$target_file" ]] || ! diff -q "$agent_file" "$target_file" > /dev/null 2>&1; then
+        cp "$agent_file" "$target_file"
+        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
+      fi
+    done
+  fi
+
+  if [[ "$ADAPTERS_UPDATED" -gt 0 ]]; then
+    echo "Adaptadores atualizados: $ADAPTERS_UPDATED arquivo(s)"
+  fi
+fi
+
+# Re-gerar governanca contextual se AGENTS.md existir e houve atualizacoes
 GOVERNANCE_GENERATOR="$SOURCE_DIR/.agents/skills/analyze-project/scripts/generate-governance.sh"
 
 if [[ "$CHECK_ONLY" -eq 0 && "$OUTDATED" -gt 0 && -f "$PROJECT_DIR/AGENTS.md" && -f "$GOVERNANCE_GENERATOR" ]]; then

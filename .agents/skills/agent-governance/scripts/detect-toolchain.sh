@@ -77,6 +77,8 @@ if [[ -f "package.json" ]] || find_deep "package.json"; then
   scripts=""
   if command -v jq >/dev/null 2>&1; then
     scripts="$(jq -r '.scripts // {} | keys[]' package.json 2>/dev/null || true)"
+  else
+    echo "AVISO: jq nao encontrado — deteccao de scripts Node limitada (fmt, test e lint serao null)" >&2
   fi
 
   node_fmt=""

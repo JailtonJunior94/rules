@@ -106,5 +106,3 @@ Comandos especificos do projeto (Go):
 2. Nao assumir versao de linguagem, framework ou runtime sem verificar.
 3. Nao alterar comportamento publico sem deixar isso explicito.
 4. Nao usar exemplos como copia cega; adaptar ao contexto real.
-
-

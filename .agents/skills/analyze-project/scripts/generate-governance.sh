@@ -305,6 +305,24 @@ EOF
     return
   fi
 
+  if file_exists "package.json" || file_exists "tsconfig.json"; then
+    cat <<'EOF'
+- Controllers e routers devem depender de services ou use cases, nao do contrario.
+- Dominio nao deve importar detalhes de framework (Express, Fastify, NestJS), ORM ou drivers.
+- Infraestrutura implementa interfaces consumidas pela camada de aplicacao, preservando dependencia para dentro.
+EOF
+    return
+  fi
+
+  if file_exists "pyproject.toml" || file_exists "requirements.txt" || file_exists "setup.py" || file_exists "Pipfile"; then
+    cat <<'EOF'
+- Routers e handlers devem depender de services ou use cases, nao do contrario.
+- Dominio nao deve importar detalhes de framework (FastAPI, Django, Flask), ORM ou drivers.
+- Infraestrutura implementa contratos consumidos pela camada de aplicacao, preservando dependencia para dentro.
+EOF
+    return
+  fi
+
   cat <<'EOF'
 - Dependencias devem apontar de bordas externas para o nucleo do negocio.
 - Detalhes de framework, IO e persistencia nao devem vazar para o centro do sistema.
@@ -498,7 +516,10 @@ render_template() {
     local key="$1"
     local value="$2"
     shift 2
-    content="${content//\{\{$key\}\}/$value}"
+    content="$(RENDER_KEY="{{$key}}" RENDER_VAL="$value" awk '
+      BEGIN { k = ENVIRON["RENDER_KEY"]; v = ENVIRON["RENDER_VAL"] }
+      { gsub(k, v); print }
+    ' <<< "$content")"
   done
 
   printf '%s\n' "$content"

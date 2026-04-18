@@ -33,8 +33,9 @@ Padrao arquitetural nao inferido com alta confianca; assumir composicao simples 
 
 ### Fluxo de Dependencias
 
-- Dependencias devem apontar de bordas externas para o nucleo do negocio.
-- Detalhes de framework, IO e persistencia nao devem vazar para o centro do sistema.
+- Controllers e routers devem depender de services ou use cases, nao do contrario.
+- Dominio nao deve importar detalhes de framework (Express, Fastify, NestJS), ORM ou drivers.
+- Infraestrutura implementa interfaces consumidas pela camada de aplicacao, preservando dependencia para dentro.
 
 ## Modo de trabalho
 

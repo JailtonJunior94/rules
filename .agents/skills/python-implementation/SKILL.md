@@ -27,9 +27,11 @@ description: Implementa alteracoes em codigo Python usando governanca base, conv
 11. Ler `references/security.md` quando a tarefa envolver autenticacao, autorizacao, validacao de input, rate limiting, CORS ou tratamento de segredos.
 12. Ler `references/build.md` quando a tarefa envolver Dockerfile, pipeline de CI, packaging, gerenciamento de dependencias ou distribuicao.
 13. Ler `references/examples-domain-flow.md` quando a tarefa precisar de esqueleto concreto de fluxo end-to-end (entidade, use case, handler, teste).
-14. Ler `references/graceful-lifecycle.md` quando a tarefa envolver shutdown gracioso, signal handling (SIGTERM/SIGINT), drain de conexoes, cleanup de asyncio tasks ou encerramento de workers.
-15. Ler `references/configuration.md` quando a tarefa envolver carregamento de configuracao, variaveis de ambiente, pydantic-settings ou inicializacao de dependencias.
-16. Ler `references/messaging.md` quando a tarefa envolver producao ou consumo de mensagens, eventos, filas, topicos ou idempotencia de consumidores.
+14. Ler `references/examples-testing.md` quando a tarefa precisar de exemplos de fixtures, parametrize, validacao de schemas ou assercoes async.
+15. Ler `references/examples-infrastructure.md` quando a tarefa precisar de exemplo de graceful shutdown, paginacao cursor-based ou versionamento de API.
+16. Ler `references/graceful-lifecycle.md` quando a tarefa envolver shutdown gracioso, signal handling (SIGTERM/SIGINT), drain de conexoes, cleanup de asyncio tasks ou encerramento de workers.
+17. Ler `references/configuration.md` quando a tarefa envolver carregamento de configuracao, variaveis de ambiente, pydantic-settings ou inicializacao de dependencias.
+18. Ler `references/messaging.md` quando a tarefa envolver producao ou consumo de mensagens, eventos, filas, topicos ou idempotencia de consumidores.
 
 **Economia de contexto**
 Se mais de 4 referencias forem necessarias para a mesma tarefa, priorizar as 3 mais criticas para o escopo da mudanca e registrar as demais como contexto nao carregado. Carregar referencias adicionais apenas se a implementacao revelar necessidade concreta.

@@ -28,3 +28,6 @@ jobs:
 
       - name: Run install tests
         run: bash tests/test-install.sh
+
+      - name: Run upgrade tests
+        run: bash tests/test-upgrade.sh

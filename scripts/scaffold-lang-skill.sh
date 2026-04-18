@@ -86,10 +86,11 @@ Se mais de 4 referencias forem necessarias para a mesma tarefa, priorizar as 3 m
 * Se houver conflito entre esta skill e a governanca base, seguir a restricao mais segura e registrar a suposicao.
 SKILL_EOF
 
-# Substituir placeholders
+# Substituir placeholders (portavel Linux e macOS)
 LANG_UPPER="$(echo "$LANG" | tr '[:lower:]' '[:upper:]')"
-sed -i '' "s/__SKILL_NAME__/$SKILL_NAME/g" "$SKILL_DIR/SKILL.md"
-sed -i '' "s/__LANG_UPPER__/$LANG_UPPER/g" "$SKILL_DIR/SKILL.md"
+tmp_file="$(mktemp)"
+sed "s/__SKILL_NAME__/$SKILL_NAME/g; s/__LANG_UPPER__/$LANG_UPPER/g" "$SKILL_DIR/SKILL.md" > "$tmp_file"
+mv "$tmp_file" "$SKILL_DIR/SKILL.md"
 
 # --- Reference stubs ---
 REFS=(conventions architecture testing error-handling api patterns observability concurrency resilience persistence security build examples-domain-flow)

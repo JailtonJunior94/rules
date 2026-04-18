@@ -116,12 +116,37 @@ Durante a execucao, o instalador pergunta:
 
 Se nenhuma linguagem for informada, o instalador usa Go como padrao.
 
+### Modo Nao-Interativo
+
+Para uso em scripts, CI ou automacao, passe `--tools` e `--langs` diretamente:
+
+```bash
+# instalar apenas Claude e Gemini, com Go e Python
+bash install.sh --tools claude,gemini --langs go,python /caminho/do/projeto
+
+# instalar todas as ferramentas e todas as linguagens
+bash install.sh --tools all --langs all /caminho/do/projeto
+
+# instalar apenas Codex e Copilot, sem skills de linguagem
+bash install.sh --tools codex,copilot /caminho/do/projeto
+```
+
+Valores aceitos:
+- `--tools`: `claude`, `gemini`, `codex`, `copilot` ou `all`
+- `--langs`: `go`, `node`, `python` ou `all`
+
 ### Dry Run
 
 Para inspecionar o que seria criado sem alterar arquivos:
 
 ```bash
 bash install.sh --dry-run /caminho/do/projeto
+```
+
+Combinavel com modo nao-interativo:
+
+```bash
+bash install.sh --tools all --langs go --dry-run /caminho/do/projeto
 ```
 
 Esse modo e util quando voce quer auditar a instalacao antes de gravar arquivos em um repositorio real.

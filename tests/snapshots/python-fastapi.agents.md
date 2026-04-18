@@ -31,8 +31,9 @@ Padrao arquitetural nao inferido com alta confianca; assumir composicao simples 
 
 ### Fluxo de Dependencias
 
-- Dependencias devem apontar de bordas externas para o nucleo do negocio.
-- Detalhes de framework, IO e persistencia nao devem vazar para o centro do sistema.
+- Routers e handlers devem depender de services ou use cases, nao do contrario.
+- Dominio nao deve importar detalhes de framework (FastAPI, Django, Flask), ORM ou drivers.
+- Infraestrutura implementa contratos consumidos pela camada de aplicacao, preservando dependencia para dentro.
 
 ## Modo de trabalho
 
@@ -100,5 +101,3 @@ Comandos especificos do projeto (Python):
 2. Nao assumir versao de linguagem, framework ou runtime sem verificar.
 3. Nao alterar comportamento publico sem deixar isso explicito.
 4. Nao usar exemplos como copia cega; adaptar ao contexto real.
-
-

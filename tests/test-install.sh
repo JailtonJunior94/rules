@@ -107,6 +107,18 @@ else
   fail "full-install: .github/agents ausente"
 fi
 
+if [[ -d "$FULL_TARGET/.github/skills" ]]; then
+  pass "full-install: .github/skills criado"
+else
+  fail "full-install: .github/skills ausente"
+fi
+
+if [[ -e "$FULL_TARGET/.github/skills/agent-governance/SKILL.md" ]]; then
+  pass "full-install: .github/skills/agent-governance presente"
+else
+  fail "full-install: .github/skills/agent-governance ausente"
+fi
+
 # Skill canonica presente
 if [[ -e "$FULL_TARGET/.agents/skills/agent-governance/SKILL.md" ]]; then
   pass "full-install: skill agent-governance presente"
