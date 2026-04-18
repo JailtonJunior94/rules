@@ -294,6 +294,29 @@ else
 fi
 
 # ============================================================
+# Gemini commands: {{args}} presente no prompt
+# ============================================================
+GEMINI_COMMANDS_DIR="$ROOT_DIR/.gemini/commands"
+
+for cmd_file in "$GEMINI_COMMANDS_DIR"/*.toml; do
+  cmd_name="$(basename "$cmd_file" .toml)"
+
+  # Deve conter {{args}} no prompt
+  if grep -q '{{args}}' "$cmd_file"; then
+    pass "gemini-command-$cmd_name: contem {{args}}"
+  else
+    fail "gemini-command-$cmd_name: {{args}} ausente no prompt"
+  fi
+
+  # Deve referenciar .agents/skills/ no prompt
+  if grep -q '\.agents/skills/' "$cmd_file"; then
+    pass "gemini-command-$cmd_name: referencia skill canonica"
+  else
+    fail "gemini-command-$cmd_name: nao referencia skill canonica"
+  fi
+done
+
+# ============================================================
 # Resumo
 # ============================================================
 echo ""

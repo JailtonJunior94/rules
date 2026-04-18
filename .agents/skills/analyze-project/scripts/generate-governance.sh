@@ -11,6 +11,7 @@ PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 
 INSTALL_CLAUDE="${INSTALL_CLAUDE:-0}"
 INSTALL_GEMINI="${INSTALL_GEMINI:-0}"
+INSTALL_CODEX="${INSTALL_CODEX:-0}"
 INSTALL_COPILOT="${INSTALL_COPILOT:-0}"
 
 # Flags de linguagem: quando nao definidas, detectar pela presenca de arquivos
@@ -132,6 +133,7 @@ detect_architectural_pattern() {
 detect_frameworks() {
   local frameworks=()
 
+  # --- Go ---
   if file_exists "go.mod"; then
     if grep -q 'github.com/gin-gonic/gin' "$PROJECT_DIR/go.mod"; then
       frameworks+=("Gin")
@@ -147,6 +149,51 @@ detect_frameworks() {
     fi
     if grep -q 'connectrpc.com/connect' "$PROJECT_DIR/go.mod"; then
       frameworks+=("Connect")
+    fi
+  fi
+
+  # --- Node/TypeScript ---
+  if file_exists "package.json"; then
+    local pkg="$PROJECT_DIR/package.json"
+    if grep -q '"express"' "$pkg"; then
+      frameworks+=("Express")
+    fi
+    if grep -q '"@nestjs/core"' "$pkg"; then
+      frameworks+=("NestJS")
+    fi
+    if grep -q '"fastify"' "$pkg"; then
+      frameworks+=("Fastify")
+    fi
+    if grep -q '"next"' "$pkg"; then
+      frameworks+=("Next.js")
+    fi
+    if grep -q '"hono"' "$pkg"; then
+      frameworks+=("Hono")
+    fi
+  fi
+
+  # --- Python ---
+  if file_exists "pyproject.toml"; then
+    local pyp="$PROJECT_DIR/pyproject.toml"
+    if grep -q 'fastapi' "$pyp"; then
+      frameworks+=("FastAPI")
+    fi
+    if grep -q 'django' "$pyp"; then
+      frameworks+=("Django")
+    fi
+    if grep -q 'flask' "$pyp"; then
+      frameworks+=("Flask")
+    fi
+  elif file_exists "requirements.txt"; then
+    local req="$PROJECT_DIR/requirements.txt"
+    if grep -qi 'fastapi' "$req"; then
+      frameworks+=("FastAPI")
+    fi
+    if grep -qi 'django' "$req"; then
+      frameworks+=("Django")
+    fi
+    if grep -qi 'flask' "$req"; then
+      frameworks+=("Flask")
     fi
   fi
 
@@ -174,6 +221,12 @@ detect_primary_stack() {
   fi
   if file_exists "pom.xml" || file_exists "build.gradle" || file_exists "build.gradle.kts"; then
     parts+=("Java/Kotlin")
+  fi
+  if file_exists "Cargo.toml"; then
+    parts+=("Rust")
+  fi
+  if ls "$PROJECT_DIR"/*.csproj >/dev/null 2>&1 || ls "$PROJECT_DIR"/*.sln >/dev/null 2>&1; then
+    parts+=("C#/.NET")
   fi
 
   if [[ ${#parts[@]} -eq 0 ]]; then
@@ -409,6 +462,30 @@ build_stack_section() {
   printf '%s\n' "${lines[@]}"
 }
 
+build_codex_config() {
+  local base_skills=(agent-governance analyze-project create-prd create-technical-specification create-tasks execute-task refactor review bugfix)
+  local lang_skills=()
+
+  if should_include_go; then
+    lang_skills+=(go-implementation object-calisthenics-go)
+  fi
+  if should_include_node; then
+    lang_skills+=(node-implementation)
+  fi
+  if should_include_python; then
+    lang_skills+=(python-implementation)
+  fi
+
+  local all_skills=("${base_skills[@]}" "${lang_skills[@]}")
+  local output=""
+
+  for skill in "${all_skills[@]}"; do
+    output+="[[skills.config]]\npath = \".agents/skills/$skill\"\nenabled = true\n\n"
+  done
+
+  printf '%b' "$output"
+}
+
 render_template() {
   local template_path="$1"
   shift
@@ -474,6 +551,11 @@ if [[ "$INSTALL_GEMINI" == "1" ]]; then
     "CONFIG_LINE_3" "\`.gemini/commands/\` sao adaptadores finos que apontam para a habilidade correta." \
     "SECAO_STACK" "$STACK_SECTION" \
     > "$PROJECT_DIR/GEMINI.md"
+fi
+
+if [[ "$INSTALL_CODEX" == "1" ]]; then
+  mkdir -p "$PROJECT_DIR/.codex"
+  build_codex_config > "$PROJECT_DIR/.codex/config.toml"
 fi
 
 if [[ "$INSTALL_COPILOT" == "1" ]]; then

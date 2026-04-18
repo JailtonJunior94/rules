@@ -1,0 +1,27 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run governance generation tests
+        run: bash tests/test-generate-governance.sh
+
+      - name: Run script tests
+        run: bash tests/test-scripts.sh
+
+      - name: Run install tests
+        run: bash tests/test-install.sh

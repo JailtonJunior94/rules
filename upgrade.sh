@@ -110,9 +110,18 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
     echo "  DESATUALIZADA  $skill_name (fonte: $source_version, alvo: $target_version)"
     OUTDATED=$((OUTDATED + 1))
   else
-    echo "  OK  $skill_name ($target_version)"
-    UP_TO_DATE=$((UP_TO_DATE + 1))
-    continue
+    # Versoes iguais — verificar checksum para detectar edicoes sem bump
+    local source_hash target_hash
+    source_hash="$(shasum -a 256 "$source_skill" | awk '{print $1}')"
+    target_hash="$(shasum -a 256 "$target_skill" | awk '{print $1}')"
+    if [[ "$source_hash" != "$target_hash" ]]; then
+      echo "  CONTEUDO DIVERGENTE  $skill_name ($target_version, checksum diferente)"
+      OUTDATED=$((OUTDATED + 1))
+    else
+      echo "  OK  $skill_name ($target_version)"
+      UP_TO_DATE=$((UP_TO_DATE + 1))
+      continue
+    fi
   fi
 
   # Atualizar se nao estiver em modo check

@@ -185,8 +185,7 @@ case "$lang_selection" in
     INSTALL_GO=1; INSTALL_NODE=1; INSTALL_PYTHON=1
     ;;
   "")
-    INSTALL_GO=1
-    echo "Nenhuma selecionada — instalando Go como padrao."
+    echo "Nenhuma linguagem selecionada — apenas skills processuais serao instaladas."
     ;;
   *)
     read -ra lang_nums <<< "$lang_selection"
@@ -200,11 +199,6 @@ case "$lang_selection" in
     done
     ;;
 esac
-
-if [[ $((INSTALL_GO + INSTALL_NODE + INSTALL_PYTHON)) -eq 0 ]]; then
-  INSTALL_GO=1
-  echo "Nenhuma linguagem selecionada — instalando Go como padrao."
-fi
 
 [[ $INSTALL_GO -eq 1 ]]     && LANG_SKILLS+=(go-implementation object-calisthenics-go)
 [[ $INSTALL_NODE -eq 1 ]]   && LANG_SKILLS+=(node-implementation)
@@ -275,6 +269,7 @@ elif [[ "$GENERATE_CONTEXTUAL_GOVERNANCE" == "1" ]]; then
   echo "-> Gerando governanca contextual..."
   INSTALL_CLAUDE="$INSTALL_CLAUDE" \
   INSTALL_GEMINI="$INSTALL_GEMINI" \
+  INSTALL_CODEX="$INSTALL_CODEX" \
   INSTALL_COPILOT="$INSTALL_COPILOT" \
   INSTALL_GO="$INSTALL_GO" \
   INSTALL_NODE="$INSTALL_NODE" \

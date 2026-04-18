@@ -80,6 +80,10 @@ Para tarefas de correcao de bugs com remediacao e teste de regressao, carregar t
 
 - `.agents/skills/bugfix/SKILL.md`
 
+### Composicao Multi-Linguagem
+
+Em projetos com mais de uma linguagem (ex: monorepo Go + Node), carregar apenas a skill da linguagem afetada pela mudanca. Se a tarefa cruzar linguagens, carregar ambas e aplicar a validacao de cada stack nos arquivos correspondentes. Nao misturar convencoes de uma linguagem em arquivos de outra.
+
 ## Referencias
 
 Cada skill lista suas proprias referencias em `references/` com gatilhos de carregamento no respectivo `SKILL.md`. Nao duplicar a listagem aqui — consultar o SKILL.md da skill ativa para saber quais referencias carregar e em que condicao.
