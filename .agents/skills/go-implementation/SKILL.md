@@ -9,9 +9,8 @@ description: Implementa alteracoes em codigo Go usando governanca base, arquitet
 ## Procedimentos
 
 **Etapa 1: Carregar base obrigatoria**
-1. Ler `AGENTS.md`.
-2. Ler `.agents/skills/agent-governance/SKILL.md`.
-3. Ler `references/governance.md`.
+1. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido.
+2. Ler `references/governance.md`.
 4. Ler `references/architecture.md`.
 5. Ler `references/go-standards.md`.
 6. Executar `bash scripts/verify-go-mod.sh`.
@@ -52,10 +51,8 @@ description: Implementa alteracoes em codigo Go usando governanca base, arquitet
 4. Adaptar exemplos ao contexto real em vez de replica-los literalmente.
 
 **Etapa 5: Validar**
-1. Executar `gofmt` ou o formatter adotado pelo contexto nos arquivos Go alterados.
-2. Executar primeiro testes direcionados e depois testes mais amplos quando o custo for proporcional.
-3. Executar lint quando esse passo existir.
-4. Registrar falhas com o comando exato e um diagnostico curto.
+1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+2. Em Go, preferir `gofmt` como formatter e `golangci-lint run` como lint quando disponiveis.
 
 ## Tratamento de Erros
 * Se `go.mod` estiver ausente, parar antes de assumir versao de Go ou dependencias.

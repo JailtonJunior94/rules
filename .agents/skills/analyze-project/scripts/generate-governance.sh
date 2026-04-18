@@ -13,6 +13,11 @@ INSTALL_CLAUDE="${INSTALL_CLAUDE:-0}"
 INSTALL_GEMINI="${INSTALL_GEMINI:-0}"
 INSTALL_COPILOT="${INSTALL_COPILOT:-0}"
 
+# Flags de linguagem: quando nao definidas, detectar pela presenca de arquivos
+INSTALL_GO="${INSTALL_GO:-auto}"
+INSTALL_NODE="${INSTALL_NODE:-auto}"
+INSTALL_PYTHON="${INSTALL_PYTHON:-auto}"
+
 trim() {
   local value="$1"
   value="${value#"${value%%[![:space:]]*}"}"
@@ -28,6 +33,33 @@ has_any_files() {
   local dir="$1"
   [[ -d "$PROJECT_DIR/$dir" ]] || return 1
   find "$PROJECT_DIR/$dir" -mindepth 1 -maxdepth 1 | read -r _
+}
+
+# Verifica se uma linguagem deve ser incluida.
+# Se a flag for "auto", detecta pela presenca de arquivos.
+# Se for "1", inclui. Qualquer outro valor, exclui.
+should_include_go() {
+  if [[ "$INSTALL_GO" == "auto" ]]; then
+    file_exists "go.mod"
+  else
+    [[ "$INSTALL_GO" == "1" ]]
+  fi
+}
+
+should_include_node() {
+  if [[ "$INSTALL_NODE" == "auto" ]]; then
+    file_exists "package.json" || file_exists "tsconfig.json"
+  else
+    [[ "$INSTALL_NODE" == "1" ]]
+  fi
+}
+
+should_include_python() {
+  if [[ "$INSTALL_PYTHON" == "auto" ]]; then
+    file_exists "pyproject.toml" || file_exists "requirements.txt" || file_exists "setup.py" || file_exists "Pipfile"
+  else
+    [[ "$INSTALL_PYTHON" == "1" ]]
+  fi
 }
 
 detect_architecture_type() {
@@ -271,9 +303,17 @@ EOF
 build_language_rules() {
   local output=""
 
-  if file_exists "go.mod"; then
+  if should_include_go; then
     output+="Para tarefas que alteram codigo Go, carregar tambem:\n\n- \`.agents/skills/go-implementation/SKILL.md\`\n"
     output+="\nPara tarefas de revisao ou refatoracao incremental de design em Go guiadas por heuristicas de object calisthenics, carregar tambem:\n\n- \`.agents/skills/object-calisthenics-go/SKILL.md\`\n"
+  fi
+
+  if should_include_node; then
+    output+="\nPara tarefas que alteram codigo Node/TypeScript, carregar tambem:\n\n- \`.agents/skills/node-implementation/SKILL.md\`\n"
+  fi
+
+  if should_include_python; then
+    output+="\nPara tarefas que alteram codigo Python, carregar tambem:\n\n- \`.agents/skills/python-implementation/SKILL.md\`\n"
   fi
 
   printf '%b' "$output"
@@ -288,30 +328,31 @@ build_language_references() {
 build_validation_commands() {
   local lines=()
 
-  if file_exists "go.mod"; then
+  lines+=("Seguir \`.agents/skills/agent-governance/references/validation-steps.md\` como base canonica.")
+  lines+=("")
+
+  if should_include_go && file_exists "go.mod"; then
+    lines+=("Comandos especificos do projeto (Go):")
     lines+=("1. Rodar \`gofmt\` nos arquivos Go alterados.")
     if file_exists ".golangci.yml" || file_exists ".golangci.yaml" || file_exists ".golangci.toml"; then
-      lines+=("2. Rodar \`golangci-lint run\` quando o contexto local oferecer esse passo.")
-      lines+=("3. Rodar primeiro testes direcionados e depois \`go test ./...\` quando o custo for proporcional.")
-      lines+=("4. Rodar \`go vet ./...\` quando esse passo fizer parte do gate do projeto.")
-      lines+=("5. Informar falhas com o comando exato e um diagnostico curto.")
-    else
-      lines+=("2. Rodar primeiro testes direcionados e depois \`go test ./...\` quando o custo for proporcional.")
-      lines+=("3. Rodar \`go vet ./...\` quando esse passo fizer parte do gate do projeto.")
-      lines+=("4. Rodar lint se o contexto oferecer esse passo.")
-      lines+=("5. Informar falhas com o comando exato e um diagnostico curto.")
+      lines+=("2. Rodar \`golangci-lint run\` como passo de lint.")
     fi
-  elif file_exists "package.json"; then
+    lines+=("3. Rodar primeiro testes direcionados e depois \`go test ./...\` quando o custo for proporcional.")
+    lines+=("4. Rodar \`go vet ./...\` quando esse passo fizer parte do gate do projeto.")
+  fi
+
+  if should_include_node && file_exists "package.json"; then
+    lines+=("Comandos especificos do projeto (Node):")
     lines+=("1. Rodar formatter dos arquivos alterados quando o projeto oferecer esse passo.")
     lines+=("2. Rodar \`npm test\` ou o comando equivalente do contexto.")
     lines+=("3. Rodar \`npm run lint\` quando esse passo existir.")
-    lines+=("4. Informar falhas com o comando exato e um diagnostico curto.")
-  else
-    lines+=("1. Rodar formatter dos arquivos alterados.")
-    lines+=("2. Rodar primeiro testes direcionados.")
-    lines+=("3. Rodar testes mais amplos quando o custo for proporcional.")
-    lines+=("4. Rodar lint se o contexto oferecer esse passo.")
-    lines+=("5. Informar falhas com o comando exato e um diagnostico curto.")
+  fi
+
+  if should_include_python && (file_exists "pyproject.toml" || file_exists "requirements.txt"); then
+    lines+=("Comandos especificos do projeto (Python):")
+    lines+=("1. Rodar \`ruff format .\` ou \`black .\` conforme toolchain do projeto.")
+    lines+=("2. Rodar \`pytest\` ou o comando de teste equivalente do contexto.")
+    lines+=("3. Rodar \`ruff check .\` ou lint equivalente quando disponivel.")
   fi
 
   printf '%s\n' "${lines[@]}"
@@ -338,16 +379,34 @@ EOF
 }
 
 build_stack_section() {
-  if file_exists "go.mod"; then
-    printf '%s\n' \
-      "## Stack" \
-      "" \
-      "- Projeto com contexto Go detectado: carregar \`.agents/skills/go-implementation/SKILL.md\` ao alterar codigo Go." \
-      "- Validar a versao declarada em \`go.mod\` antes de introduzir APIs da linguagem ou novas dependencias."
+  local lines=()
+  local has_stack=0
+
+  if should_include_go && file_exists "go.mod"; then
+    lines+=("- Projeto com contexto Go detectado: carregar \`.agents/skills/go-implementation/SKILL.md\` ao alterar codigo Go.")
+    lines+=("- Validar a versao declarada em \`go.mod\` antes de introduzir APIs da linguagem ou novas dependencias.")
+    has_stack=1
+  fi
+
+  if should_include_node && (file_exists "package.json" || file_exists "tsconfig.json"); then
+    lines+=("- Projeto com contexto Node/TypeScript detectado: carregar \`.agents/skills/node-implementation/SKILL.md\` ao alterar codigo Node/TS.")
+    lines+=("- Validar versao de Node em \`engines\` ou \`.nvmrc\` antes de usar APIs recentes.")
+    has_stack=1
+  fi
+
+  if should_include_python && (file_exists "pyproject.toml" || file_exists "requirements.txt" || file_exists "setup.py" || file_exists "Pipfile"); then
+    lines+=("- Projeto com contexto Python detectado: carregar \`.agents/skills/python-implementation/SKILL.md\` ao alterar codigo Python.")
+    lines+=("- Validar versao de Python em \`pyproject.toml\` ou \`.python-version\` antes de usar APIs recentes.")
+    has_stack=1
+  fi
+
+  if [[ "$has_stack" -eq 0 ]]; then
+    printf ''
     return
   fi
 
-  printf ''
+  printf '## Stack\n\n'
+  printf '%s\n' "${lines[@]}"
 }
 
 render_template() {

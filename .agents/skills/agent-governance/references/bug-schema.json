@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bug-report.schema.json",
+  "title": "Bug Report",
+  "description": "Schema canonico para interface review -> bugfix. Cada elemento representa um bug emitido pela skill review para consumo pela skill bugfix.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "required": ["id", "severity", "file", "line", "reproduction", "expected", "actual"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^BUG-\\d{3,}$",
+        "description": "Identificador estavel do bug (ex: BUG-001)."
+      },
+      "severity": {
+        "type": "string",
+        "enum": ["critical", "major", "minor"],
+        "description": "Severidade do defeito."
+      },
+      "file": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Arquivo principal do defeito (caminho relativo)."
+      },
+      "line": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Linha aproximada do problema."
+      },
+      "reproduction": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Cenario minimo para reproduzir o defeito."
+      },
+      "expected": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Comportamento esperado."
+      },
+      "actual": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Comportamento atual observado."
+      }
+    }
+  }
+}

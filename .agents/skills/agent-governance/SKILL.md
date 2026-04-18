@@ -9,7 +9,7 @@ description: Orquestra regras de governanca, DDD, tratamento de erros, seguranca
 ## Procedimentos
 
 **Etapa 1: Carregar contexto base**
-1. Ler `AGENTS.md` antes de propor ou executar mudancas.
+1. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido.
 2. Identificar se a tarefa afeta modelagem de dominio, fluxo de erro, seguranca, validacao ou testes.
 3. Aplicar a menor mudanca segura que preserve arquitetura, convencoes e fronteiras existentes.
 
@@ -26,9 +26,7 @@ description: Orquestra regras de governanca, DDD, tratamento de erros, seguranca
 4. Atualizar ou adicionar testes quando houver mudanca de comportamento.
 
 **Etapa 4: Validar proporcionalmente**
-1. Rodar formatter dos arquivos alterados quando a stack oferecer esse passo.
-2. Rodar primeiro testes direcionados e depois validacoes mais amplas quando o custo for proporcional ao risco.
-3. Informar falhas de validacao com o comando exato e um diagnostico curto.
+1. Seguir `references/validation-steps.md`.
 
 ## Tratamento de Erros
 * Se a tarefa nao deixar claro quais referencias carregar, aplicar `AGENTS.md` como baseline e ler apenas os arquivos tematicos diretamente ligados a superficie alterada.

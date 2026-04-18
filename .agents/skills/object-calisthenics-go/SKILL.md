@@ -9,11 +9,10 @@ description: Aplica heuristicas de object calisthenics em codigo Go por meio de 
 ## Procedimentos
 
 **Etapa 1: Carregar a base proporcional ao modo**
-1. Ler `AGENTS.md`.
-2. Executar `bash scripts/list-go-files.sh` para confirmar a superficie Go candidata dentro do contexto atual.
-3. Parar se nao houver arquivos Go relevantes ou se a solicitacao nao estiver limitada o suficiente para uma mudanca segura.
-4. Se o modo for `review` (sem edicao): carregar apenas `references/rules.md` e `references/evaluation-guide.md`. Nao carregar `agent-governance/SKILL.md` nem `go-implementation/SKILL.md` — o custo de contexto nao se justifica para avaliacao sem alteracao.
-5. Se o modo for `execution`: carregar `.agents/skills/agent-governance/SKILL.md` e `.agents/skills/go-implementation/SKILL.md` antes de alterar codigo Go.
+1. Executar `bash scripts/list-go-files.sh` para confirmar a superficie Go candidata dentro do contexto atual.
+2. Parar se nao houver arquivos Go relevantes ou se a solicitacao nao estiver limitada o suficiente para uma mudanca segura.
+3. Se o modo for `review` (sem edicao): carregar apenas `references/rules.md` e `references/evaluation-guide.md`. Nao carregar a carga base completa — o custo de contexto nao se justifica para avaliacao sem alteracao.
+4. Se o modo for `execution`: confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido e carregar tambem `.agents/skills/go-implementation/SKILL.md` antes de alterar codigo Go.
 
 **Etapa 2: Delimitar o alvo da calibragem**
 1. Identificar o menor conjunto de arquivos, tipos, funcoes e testes que concentra o problema.
@@ -48,11 +47,7 @@ description: Aplica heuristicas de object calisthenics em codigo Go por meio de 
    - interromper se a proxima melhoria exigir quebra de API publica, mudanca transversal ou redesenho amplo
 
 **Etapa 6: Validar de forma proporcional**
-1. Rodar formatter nos arquivos alterados.
-2. Rodar primeiro testes direcionados aos packages afetados.
-3. Rodar testes mais amplos quando o custo for proporcional ao risco.
-4. Rodar lint quando o projeto oferecer esse passo.
-5. Registrar falhas com comando exato e diagnostico curto.
+1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
 
 **Etapa 7: Retornar a conclusao**
 1. Informar o modo aplicado, as regras mais relevantes, os arquivos afetados e a validacao executada.

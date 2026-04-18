@@ -69,6 +69,9 @@ Para tarefas que alteram codigo, carregar a skill:
 - `.agents/skills/agent-governance/SKILL.md`
 
 
+Para tarefas que alteram codigo Node/TypeScript, carregar tambem:
+
+- `.agents/skills/node-implementation/SKILL.md`
 
 Para tarefas de correcao de bugs com remediacao e teste de regressao, carregar tambem:
 
@@ -82,10 +85,12 @@ Cada skill lista suas proprias referencias em `references/` com gatilhos de carr
 
 Antes de concluir uma alteracao:
 
+Seguir `.agents/skills/agent-governance/references/validation-steps.md` como base canonica.
+
+Comandos especificos do projeto (Node):
 1. Rodar formatter dos arquivos alterados quando o projeto oferecer esse passo.
 2. Rodar `npm test` ou o comando equivalente do contexto.
 3. Rodar `npm run lint` quando esse passo existir.
-4. Informar falhas com o comando exato e um diagnostico curto.
 
 ## Restricoes
 

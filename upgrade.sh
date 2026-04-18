@@ -49,6 +49,35 @@ extract_version() {
   printf '%s' "$version"
 }
 
+# Compara duas versoes semver (MAJOR.MINOR.PATCH).
+# Retorna 0 se $1 > $2 (source mais nova), 1 caso contrario.
+semver_gt() {
+  local source="$1"
+  local target="$2"
+
+  if [[ "$source" == "$target" ]]; then
+    return 1
+  fi
+
+  local IFS='.'
+  read -ra s_parts <<< "$source"
+  read -ra t_parts <<< "$target"
+
+  local s_major="${s_parts[0]:-0}" s_minor="${s_parts[1]:-0}" s_patch="${s_parts[2]:-0}"
+  local t_major="${t_parts[0]:-0}" t_minor="${t_parts[1]:-0}" t_patch="${t_parts[2]:-0}"
+
+  # Remover sufixos pre-release para comparacao numerica limpa
+  s_patch="${s_patch%%-*}"
+  t_patch="${t_patch%%-*}"
+
+  if [[ "$s_major" -gt "$t_major" ]]; then return 0; fi
+  if [[ "$s_major" -lt "$t_major" ]]; then return 1; fi
+  if [[ "$s_minor" -gt "$t_minor" ]]; then return 0; fi
+  if [[ "$s_minor" -lt "$t_minor" ]]; then return 1; fi
+  if [[ "$s_patch" -gt "$t_patch" ]]; then return 0; fi
+  return 1
+}
+
 OUTDATED=0
 UP_TO_DATE=0
 MISSING=0
@@ -77,11 +106,11 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
   if [[ -z "$target_version" ]]; then
     echo "  SEM VERSAO  $skill_name (fonte: $source_version, alvo: sem campo version)"
     OUTDATED=$((OUTDATED + 1))
-  elif [[ "$source_version" != "$target_version" ]]; then
+  elif semver_gt "$source_version" "$target_version"; then
     echo "  DESATUALIZADA  $skill_name (fonte: $source_version, alvo: $target_version)"
     OUTDATED=$((OUTDATED + 1))
   else
-    echo "  OK  $skill_name ($source_version)"
+    echo "  OK  $skill_name ($target_version)"
     UP_TO_DATE=$((UP_TO_DATE + 1))
     continue
   fi

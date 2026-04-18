@@ -26,15 +26,30 @@ Use estas instruções para manter consistência, segurança e qualidade ao trab
 6. Considere risco de regressão como restrição principal.
 7. Evite overengineering disfarçado de arquitetura futura.
 
+## Contrato de carga base
+
+Toda skill que altera código deve carregar, como primeiro passo, a seguinte base obrigatória — não repetir essa instrução em cada SKILL.md individual:
+
+1. Ler este `AGENTS.md`.
+2. Ler `.agents/skills/agent-governance/SKILL.md`.
+
+Essa base define governança para análise, alteração e validação, carregamento sob demanda de regras de DDD, erros, segurança e testes, e critérios mínimos de preservação arquitetural, risco e validação proporcional.
+
+Skills individuais devem declarar apenas cargas adicionais específicas ao seu contexto.
+
 ## Regras por Linguagem
-
-Para tarefas que alteram código, carregar a skill:
-
-- `.agents/skills/agent-governance/SKILL.md`
 
 Para tarefas que alteram código Go, carregar também:
 
 - `.agents/skills/go-implementation/SKILL.md`
+
+Para tarefas que alteram código Node/TypeScript, carregar também:
+
+- `.agents/skills/node-implementation/SKILL.md`
+
+Para tarefas que alteram código Python, carregar também:
+
+- `.agents/skills/python-implementation/SKILL.md`
 
 Para tarefas de revisão ou refatoração incremental de design em Go guiadas por heurísticas de object calisthenics, carregar também:
 
@@ -44,25 +59,13 @@ Para tarefas de correção de bugs com remediação e teste de regressão, carre
 
 - `.agents/skills/bugfix/SKILL.md`
 
-Essa skill define:
-
-- base obrigatória de governança para análise, alteração e validação
-- carregamento sob demanda de regras de DDD, erros, segurança e testes
-- critérios mínimos de preservação arquitetural, risco e validação proporcional
-
 ## Referências
 
 Cada skill lista suas próprias referências em `references/` com gatilhos de carregamento no respectivo `SKILL.md`. Não duplicar a listagem aqui — consultar o SKILL.md da skill ativa para saber quais referências carregar e em que condição.
 
 ## Validação
 
-Antes de concluir uma alteração:
-
-1. Rodar formatter dos arquivos alterados.
-2. Rodar primeiro testes direcionados.
-3. Rodar testes mais amplos quando o custo for proporcional.
-4. Rodar lint se o contexto oferecer esse passo.
-5. Informar falhas com o comando exato e um diagnóstico curto.
+Antes de concluir uma alteração, seguir `.agents/skills/agent-governance/references/validation-steps.md`.
 
 ## Restrições
 

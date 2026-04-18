@@ -37,7 +37,11 @@ if [[ "$RULES_DIR" == "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-SKILLS=(create-prd create-technical-specification create-tasks execute-task refactor review analyze-project agent-governance go-implementation object-calisthenics-go bugfix)
+# Skills comuns (sempre instaladas)
+BASE_SKILLS=(create-prd create-technical-specification create-tasks execute-task refactor review analyze-project agent-governance bugfix)
+
+# Skills de linguagem (selecionaveis pelo usuario)
+LANG_SKILLS=()
 
 dry_log() {
   if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -162,9 +166,65 @@ echo ""
 echo "Ferramentas selecionadas:$selected"
 echo ""
 
-# Base comum (AGENTS.md + skills canonicas)
-safe_mkdir "$PROJECT_DIR/.agents"
-link_or_copy_dir "$RULES_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills"
+# Selecao de linguagens
+INSTALL_GO=0
+INSTALL_NODE=0
+INSTALL_PYTHON=0
+
+echo "Selecione as linguagens para instalar skills de implementacao:"
+echo ""
+echo "  1) go         (inclui go-implementation + object-calisthenics-go)"
+echo "  2) node       (inclui node-implementation)"
+echo "  3) python     (inclui python-implementation)"
+echo "  A) Todas"
+echo ""
+read -rp "Digite os numeros separados por espaco (exemplo: 1 2) ou A para todas: " lang_selection
+
+case "$lang_selection" in
+  [aA])
+    INSTALL_GO=1; INSTALL_NODE=1; INSTALL_PYTHON=1
+    ;;
+  "")
+    INSTALL_GO=1
+    echo "Nenhuma selecionada — instalando Go como padrao."
+    ;;
+  *)
+    read -ra lang_nums <<< "$lang_selection"
+    for num in "${lang_nums[@]}"; do
+      case "$num" in
+        1) INSTALL_GO=1 ;;
+        2) INSTALL_NODE=1 ;;
+        3) INSTALL_PYTHON=1 ;;
+        *) echo "AVISO: opcao '$num' ignorada (invalida)." ;;
+      esac
+    done
+    ;;
+esac
+
+if [[ $((INSTALL_GO + INSTALL_NODE + INSTALL_PYTHON)) -eq 0 ]]; then
+  INSTALL_GO=1
+  echo "Nenhuma linguagem selecionada — instalando Go como padrao."
+fi
+
+[[ $INSTALL_GO -eq 1 ]]     && LANG_SKILLS+=(go-implementation object-calisthenics-go)
+[[ $INSTALL_NODE -eq 1 ]]   && LANG_SKILLS+=(node-implementation)
+[[ $INSTALL_PYTHON -eq 1 ]] && LANG_SKILLS+=(python-implementation)
+
+SKILLS=("${BASE_SKILLS[@]}" "${LANG_SKILLS[@]}")
+
+selected_langs=""
+[[ $INSTALL_GO -eq 1 ]]     && selected_langs="$selected_langs go"
+[[ $INSTALL_NODE -eq 1 ]]   && selected_langs="$selected_langs node"
+[[ $INSTALL_PYTHON -eq 1 ]] && selected_langs="$selected_langs python"
+echo ""
+echo "Linguagens selecionadas:$selected_langs"
+echo ""
+
+# Base comum (AGENTS.md + skills canonicas selecionadas)
+safe_mkdir "$PROJECT_DIR/.agents/skills"
+for skill in "${SKILLS[@]}"; do
+  link_or_copy_skill "$RULES_DIR/.agents/skills/$skill" "$RULES_DIR/.agents/skills/$skill" "$PROJECT_DIR/.agents/skills/$skill"
+done
 
 # Claude Code
 if [[ $INSTALL_CLAUDE -eq 1 ]]; then
@@ -216,6 +276,9 @@ elif [[ "$GENERATE_CONTEXTUAL_GOVERNANCE" == "1" ]]; then
   INSTALL_CLAUDE="$INSTALL_CLAUDE" \
   INSTALL_GEMINI="$INSTALL_GEMINI" \
   INSTALL_COPILOT="$INSTALL_COPILOT" \
+  INSTALL_GO="$INSTALL_GO" \
+  INSTALL_NODE="$INSTALL_NODE" \
+  INSTALL_PYTHON="$INSTALL_PYTHON" \
   bash "$GOVERNANCE_GENERATOR" "$PROJECT_DIR"
 else
   safe_cp "$RULES_DIR/AGENTS.md" "$PROJECT_DIR/AGENTS.md"

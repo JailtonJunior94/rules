@@ -91,11 +91,12 @@ Cada skill lista suas proprias referencias em `references/` com gatilhos de carr
 
 Antes de concluir uma alteracao:
 
+Seguir `.agents/skills/agent-governance/references/validation-steps.md` como base canonica.
+
+Comandos especificos do projeto (Go):
 1. Rodar `gofmt` nos arquivos Go alterados.
-2. Rodar primeiro testes direcionados e depois `go test ./...` quando o custo for proporcional.
-3. Rodar `go vet ./...` quando esse passo fizer parte do gate do projeto.
-4. Rodar lint se o contexto oferecer esse passo.
-5. Informar falhas com o comando exato e um diagnostico curto.
+3. Rodar primeiro testes direcionados e depois `go test ./...` quando o custo for proporcional.
+4. Rodar `go vet ./...` quando esse passo fizer parte do gate do projeto.
 
 ## Restricoes
 

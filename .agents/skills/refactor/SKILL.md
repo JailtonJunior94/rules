@@ -14,7 +14,7 @@ description: Planeja ou executa refatorações incrementais seguras preservando 
 3. Se o escopo for ambíguo ou amplo demais, retornar `needs_input` com os limites faltantes.
 
 **Etapa 2: Carregar o contexto técnico relevante**
-1. Ler `.agents/skills/agent-governance/SKILL.md` antes de alterar código.
+1. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido.
 2. Se a refatoração tocar código Go, ler também `.agents/skills/go-implementation/SKILL.md` e apenas as referências exigidas pela mudança.
 3. Ler `.agents/skills/agent-governance/references/` sob demanda quando DDD, tratamento de erro, segurança ou testes afetarem a mudança proposta.
 4. Mapear contratos públicos, pontos de integração e os caminhos de regressão mais prováveis antes de editar.
@@ -31,10 +31,8 @@ description: Planeja ou executa refatorações incrementais seguras preservando 
    - adicionar ou atualizar testes quando o comportamento puder regredir
 
 **Etapa 4: Validar não regressão**
-1. Rodar formatter nos arquivos alterados.
-2. Rodar primeiro os testes direcionados.
-3. Rodar comandos mais amplos de teste e lint de forma proporcional ao raio de impacto, preferindo `task test` e `task lint` quando existirem, e depois os equivalentes documentados.
-4. Se a validação falhar, tentar apenas uma remediação limitada.
+1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+2. Se a validação falhar, tentar apenas uma remediação limitada.
 
 **Etapa 5: Revisar e persistir evidências**
 1. No modo `execution`, invocar a skill `review` sobre o diff produzido.

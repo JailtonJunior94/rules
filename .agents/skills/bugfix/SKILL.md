@@ -16,9 +16,8 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 5. Confirmar o escopo de bugs a corrigir antes de editar qualquer arquivo.
 
 **Etapa 2: Carregar o contexto tecnico**
-1. Ler `AGENTS.md`.
-2. Ler `.agents/skills/agent-governance/SKILL.md` antes de alterar codigo.
-3. Se a correcao tocar codigo Go, ler tambem `.agents/skills/go-implementation/SKILL.md` e apenas as referencias exigidas pela mudanca.
+1. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido.
+2. Se a correcao tocar codigo Go, ler tambem `.agents/skills/go-implementation/SKILL.md` e apenas as referencias exigidas pela mudanca.
 4. Ler `bugs.md`, `prd.md`, `techspec.md`, arquivos de tarefa ou contexto de issue quando estiverem disponiveis e forem relevantes para o bug.
 5. Mapear contratos publicos, comportamento esperado, pontos de integracao e risco de regressao antes de propor a correcao.
 
@@ -31,11 +30,9 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 **Etapa 4: Corrigir e testar**
 1. Aplicar a menor mudanca segura focada na causa raiz.
 2. Criar um teste de regressao para cada bug corrigido que reproduza `reproduction` e valide `expected`.
-3. Rodar formatter nos arquivos alterados.
-4. Rodar primeiro os testes direcionados.
-5. Em repositorios Go, rodar `go test ./...` e `golangci-lint run` apos cada correcao concluida; em outros repositorios, usar os entrypoints equivalentes documentados sem adivinhar comandos.
-6. Se a validacao falhar, analisar o log e tentar apenas uma remediacao limitada adicional para o mesmo bug.
-7. Se o limite de duas tentativas por bug for excedido, marcar o bug como `failed`, registrar o diagnostico e seguir para o proximo bug elegivel.
+3. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+4. Se a validacao falhar, analisar o log e tentar apenas uma remediacao limitada adicional para o mesmo bug.
+5. Se o limite de duas tentativas por bug for excedido, marcar o bug como `failed`, registrar o diagnostico e seguir para o proximo bug elegivel.
 
 **Etapa 5: Revisar e registrar evidencias**
 1. Registrar para cada bug o arquivo alterado, o teste de regressao adicionado e o resultado da validacao.

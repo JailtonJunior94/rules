@@ -1,5 +1,7 @@
 # Formato Canonico de Bug
 
+Schema formal: `.agents/skills/agent-governance/references/bug-schema.json`
+
 Use cada bug como um objeto com os campos abaixo:
 
 ```json

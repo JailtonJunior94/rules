@@ -16,7 +16,7 @@ description: Executa uma tarefa de implementação aprovada por meio de codifica
 
 **Etapa 2: Carregar o contexto de implementação**
 1. Ler por completo o arquivo de tarefa selecionado, `prd.md` e `techspec.md`.
-2. Ler `.agents/skills/agent-governance/SKILL.md` antes de alterar código.
+2. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido.
 3. Se a tarefa tocar código Go, ler também `.agents/skills/go-implementation/SKILL.md` e carregar apenas as referências exigidas pela mudança.
 4. Mapear objetivo da tarefa, critérios de aceitação, subtarefas e arquivos-alvo antes de editar.
 
@@ -31,10 +31,9 @@ description: Executa uma tarefa de implementação aprovada por meio de codifica
 6. Parar com `needs_input` se uma decisão obrigatória ou entrada faltante bloquear a conclusão segura.
 
 **Etapa 4: Executar a etapa de validação e aprovação**
-1. Rodar formatter nos arquivos alterados.
-2. Rodar primeiro os testes direcionados e depois validações mais amplas de forma proporcional ao risco.
-3. Rodar os comandos de teste e lint do projeto inteiro quando o escopo da tarefa justificar.
-4. Verificar cada critério de aceitação com evidência explícita.
+1. Seguir `.agents/skills/agent-governance/references/validation-steps.md`.
+2. Rodar os comandos de teste e lint do projeto inteiro quando o escopo da tarefa justificar.
+3. Verificar cada critério de aceitação com evidência explícita.
 5. Invocar a habilidade `review` para o diff produzido e incluir `prd.md` e `techspec.md` como contexto de revisão.
 6. Se `review` retornar `REJECTED` com bugs no formato canônico, invocar a skill `bugfix` para corrigir os achados dentro do escopo da tarefa.
 7. Após `bugfix`, rerodar as validações necessárias e uma nova revisão.
