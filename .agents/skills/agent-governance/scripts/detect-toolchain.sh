@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 # Detecta comandos de fmt, test e lint disponiveis no projeto.
 # Suporta multiplas linguagens simultaneamente (inclusive manifests em subdiretorios).
-# Uso: bash detect-toolchain.sh [diretorio]
+# Uso: bash detect-toolchain.sh [diretorio] [paths-afetados-separados-por-virgula]
+# Variaveis opcionais:
+#   DETECT_TOOLCHAIN_MAX_DEPTH=6
+#   DETECT_TOOLCHAIN_FOCUS_PATHS="apps/web/src/index.ts,services/api/app.py"
 # Saida: JSON com chave por linguagem detectada, cada uma com fmt, test, lint.
 set -euo pipefail
 
 PROJECT_DIR="${1:-.}"
+FOCUS_PATHS="${DETECT_TOOLCHAIN_FOCUS_PATHS:-${2:-}}"
+MAX_DEPTH="${DETECT_TOOLCHAIN_MAX_DEPTH:-4}"
 
 if [[ ! -d "$PROJECT_DIR" ]]; then
   echo '{"error":"diretorio nao encontrado"}' >&2
@@ -16,7 +21,7 @@ cd "$PROJECT_DIR"
 
 find_manifests() {
   local pattern="$1"
-  local maxdepth="${2:-4}"
+  local maxdepth="${2:-$MAX_DEPTH}"
 
   find . -maxdepth "$maxdepth" -type f -name "$pattern" \
     -not -path "*/node_modules/*" \
@@ -156,8 +161,69 @@ relative_dir() {
   if [[ "$dir" == "." ]]; then
     printf ''
   else
-    printf '%s' "$dir"
+  printf '%s' "$dir"
   fi
+}
+
+normalize_focus_path() {
+  local path="$1"
+  path="${path#./}"
+  path="${path#/}"
+  printf '%s' "$path"
+}
+
+manifest_focus_score() {
+  local manifest="$1"
+  local manifest_dir
+  local focus
+  local best_score=999
+
+  if [[ -z "$FOCUS_PATHS" ]]; then
+    printf '500'
+    return
+  fi
+
+  manifest_dir="$(relative_dir "$manifest")"
+
+  IFS=',' read -ra focus_items <<< "$FOCUS_PATHS"
+  for focus in "${focus_items[@]}"; do
+    focus="$(normalize_focus_path "$focus")"
+    [[ -n "$focus" ]] || continue
+
+    if [[ -n "$manifest_dir" && "$focus" == "$manifest_dir" ]]; then
+      best_score=0
+      break
+    fi
+    if [[ -n "$manifest_dir" && "$focus" == "$manifest_dir"/* ]]; then
+      best_score=0
+      break
+    fi
+    if [[ -n "$manifest_dir" && "$manifest_dir" == "$focus"/* ]]; then
+      if [[ "$best_score" -gt 1 ]]; then
+        best_score=1
+      fi
+      continue
+    fi
+    if [[ -n "$manifest_dir" && "${focus%%/*}" == "${manifest_dir%%/*}" ]]; then
+      if [[ "$best_score" -gt 5 ]]; then
+        best_score=5
+      fi
+      continue
+    fi
+    if [[ "$best_score" -gt 50 ]]; then
+      best_score=50
+    fi
+  done
+
+  printf '%s' "$best_score"
+}
+
+sort_manifests_by_focus() {
+  local manifest
+  while IFS= read -r manifest; do
+    [[ -n "$manifest" ]] || continue
+    printf '%s\t%s\n' "$(manifest_focus_score "$manifest")" "$manifest"
+  done | sort -t $'\t' -k1,1n -k2,2 | cut -f2-
 }
 
 entries=()
@@ -182,7 +248,7 @@ node_packages=()
 while IFS= read -r pkg; do
   [[ -n "$pkg" ]] || continue
   node_packages+=("$pkg")
-done < <(find_manifests "package.json" 4)
+done < <(find_manifests "package.json" "$MAX_DEPTH" | sort_manifests_by_focus)
 if [[ ${#node_packages[@]} -gt 0 ]]; then
   pm="npm"
   if [[ -f "pnpm-lock.yaml" || -f "pnpm-workspace.yaml" ]]; then
@@ -256,13 +322,13 @@ pyprojects=()
 while IFS= read -r manifest; do
   [[ -n "$manifest" ]] || continue
   pyprojects+=("$manifest")
-done < <(find_manifests "pyproject.toml" 4)
+done < <(find_manifests "pyproject.toml" "$MAX_DEPTH" | sort_manifests_by_focus)
 
 requirements=()
 while IFS= read -r manifest; do
   [[ -n "$manifest" ]] || continue
   requirements+=("$manifest")
-done < <(find_manifests "requirements.txt" 4)
+done < <(find_manifests "requirements.txt" "$MAX_DEPTH" | sort_manifests_by_focus)
 if [[ ${#pyprojects[@]} -gt 0 || ${#requirements[@]} -gt 0 || -f "setup.py" || -f "Pipfile" ]]; then
   py_fmt=""
   py_test=""

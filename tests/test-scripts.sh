@@ -198,6 +198,17 @@ else
   fail "detect-toolchain: Node project falhou"
 fi
 
+# Caso: projeto Node com foco em workspace afetado
+if output="$(bash "$DETECT_TOOLCHAIN" "$ROOT_DIR/tests/fixtures/node-monorepo" "apps/web/src/index.ts" 2>/dev/null)"; then
+  if echo "$output" | grep -q '"test":"pnpm --filter @monorepo/web run test"'; then
+    pass "detect-toolchain: Node respeita workspace focado"
+  else
+    fail "detect-toolchain: Node nao prioriza workspace focado"
+  fi
+else
+  fail "detect-toolchain: Node com foco falhou"
+fi
+
 # Caso: projeto Python com pyproject em subdiretorio
 if output="$(bash "$DETECT_TOOLCHAIN" "$ROOT_DIR/tests/fixtures/python-monorepo" 2>/dev/null)"; then
   if echo "$output" | grep -q '"test":"pytest"'; then
@@ -212,6 +223,17 @@ if output="$(bash "$DETECT_TOOLCHAIN" "$ROOT_DIR/tests/fixtures/python-monorepo"
   fi
 else
   fail "detect-toolchain: Python em subdiretorio falhou"
+fi
+
+# Caso: projeto Python com profundidade configuravel e foco em package
+if output="$(DETECT_TOOLCHAIN_MAX_DEPTH=6 bash "$DETECT_TOOLCHAIN" "$ROOT_DIR/tests/fixtures/python-monorepo" "services/api/app/main.py" 2>/dev/null)"; then
+  if echo "$output" | grep -q '"python":{'; then
+    pass "detect-toolchain: Python respeita profundidade configuravel"
+  else
+    fail "detect-toolchain: Python nao detectado com profundidade configuravel"
+  fi
+else
+  fail "detect-toolchain: Python com profundidade configuravel falhou"
 fi
 
 # Caso: diretorio inexistente

@@ -37,9 +37,9 @@ Predominio de arquitetura em camadas, com separacao entre transporte, servicos, 
 
 ### Fluxo de Dependencias
 
-- Transporte e adapters devem depender de casos de uso ou servicos explicitos, nao do contrario.
-- Dominio nao deve conhecer detalhes de HTTP, banco, filas, serializacao ou drivers.
-- Infraestrutura pode implementar contratos consumidos pela aplicacao, preservando dependencia para dentro.
+- Cada stack deve expor contratos por fronteiras estaveis (HTTP/gRPC/eventos/arquivos), sem assumir detalhes internos de runtime de outra linguagem.
+- Mudancas em contratos compartilhados devem atualizar produtores e consumidores da stack afetada e validar cada runtime com seu proprio toolchain.
+- Compartilhar schemas, payloads e semantica operacional e aceitavel; compartilhar convencoes de framework, helpers de runtime ou acoplamento de deploy entre linguagens nao e.
 
 ## Modo de trabalho
 

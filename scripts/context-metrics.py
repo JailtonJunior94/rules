@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Reporta metricas simples de contexto para governanca e perfis de carga."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def estimate_tokens(text: str) -> int:
+    return round(len(text) / 4)
+
+
+def file_metrics(path: Path) -> dict[str, int | str]:
+    text = path.read_text(encoding="utf-8")
+    return {
+        "path": str(path.relative_to(ROOT)),
+        "words": len(text.split()),
+        "chars": len(text),
+        "tokens_est": estimate_tokens(text),
+    }
+
+
+def baseline_metrics() -> dict[str, dict[str, int | list[str]]]:
+    shared = [
+        ROOT / "AGENTS.md",
+        ROOT / ".agents/skills/agent-governance/SKILL.md",
+    ]
+    per_stack = {
+        "go": shared
+        + [
+            ROOT / ".agents/skills/go-implementation/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/references/architecture.md",
+        ],
+        "node": shared
+        + [
+            ROOT / ".agents/skills/node-implementation/SKILL.md",
+            ROOT / ".agents/skills/node-implementation/references/architecture.md",
+        ],
+        "python": shared
+        + [
+            ROOT / ".agents/skills/python-implementation/SKILL.md",
+            ROOT / ".agents/skills/python-implementation/references/architecture.md",
+        ],
+    }
+    result: dict[str, dict[str, int | list[str]]] = {}
+    for name, files in per_stack.items():
+        total_words = 0
+        total_chars = 0
+        total_tokens = 0
+        for file in files:
+            metrics = file_metrics(file)
+            total_words += int(metrics["words"])
+            total_chars += int(metrics["chars"])
+            total_tokens += int(metrics["tokens_est"])
+        result[name] = {
+            "files": [str(file.relative_to(ROOT)) for file in files],
+            "words": total_words,
+            "chars": total_chars,
+            "tokens_est": total_tokens,
+        }
+    return result
+
+
+def codex_skills() -> list[str]:
+    skills: list[str] = []
+    config_path = ROOT / ".codex/config.toml"
+    for line in config_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line.startswith('path = "'):
+            continue
+        path = line.split('"', 2)[1]
+        skills.append(path.rsplit("/", 1)[-1])
+    return skills
+
+
+def gather_metrics() -> dict[str, object]:
+    skill_files = sorted((ROOT / ".agents/skills").glob("*/SKILL.md"))
+    reference_files = sorted((ROOT / ".agents/skills").glob("*/references/*.md"))
+    wrapper_files = sorted((ROOT / ".claude/agents").glob("*.md"))
+    wrapper_files += sorted((ROOT / ".github/agents").glob("*.md"))
+    wrapper_files += sorted((ROOT / ".gemini/commands").glob("*.toml"))
+
+    return {
+        "baselines": baseline_metrics(),
+        "skills": [file_metrics(path) for path in skill_files],
+        "references": [file_metrics(path) for path in reference_files],
+        "wrappers": [file_metrics(path) for path in wrapper_files],
+        "codex": {
+          "skills": codex_skills(),
+          "count": len(codex_skills()),
+        },
+    }
+
+
+def render_table(metrics: dict[str, object]) -> str:
+    lines = ["Baselines:"]
+    baselines = metrics["baselines"]
+    assert isinstance(baselines, dict)
+    for stack, payload in baselines.items():
+        assert isinstance(payload, dict)
+        lines.append(
+            f"- {stack}: words={payload['words']} chars={payload['chars']} est_tokens={payload['tokens_est']}"
+        )
+
+    lines.append("")
+    lines.append("Codex:")
+    codex = metrics["codex"]
+    assert isinstance(codex, dict)
+    lines.append(f"- count={codex['count']} skills={', '.join(codex['skills'])}")
+    return "\n".join(lines)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--format", choices=("json", "table"), default="table")
+    args = parser.parse_args()
+
+    metrics = gather_metrics()
+    if args.format == "json":
+        print(json.dumps(metrics, indent=2, ensure_ascii=False))
+    else:
+        print(render_table(metrics))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

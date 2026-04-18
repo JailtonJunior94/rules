@@ -22,6 +22,11 @@ INSTALL_GO="${INSTALL_GO:-auto}"
 INSTALL_NODE="${INSTALL_NODE:-auto}"
 INSTALL_PYTHON="${INSTALL_PYTHON:-auto}"
 
+# Importar modulo de deteccao de arquitetura
+DETECT_ARCH_SCRIPT="$ROOT_DIR/.agents/skills/agent-governance/scripts/detect-architecture.sh"
+# shellcheck source=../../../agent-governance/scripts/detect-architecture.sh
+source "$DETECT_ARCH_SCRIPT"
+
 trim() {
   local value="$1"
   value="${value#"${value%%[![:space:]]*}"}"
@@ -82,73 +87,6 @@ should_include_python() {
   else
     [[ "$INSTALL_PYTHON" == "1" ]]
   fi
-}
-
-detect_architecture_type() {
-  # Monorepo: sinais fortes de multiplos projetos independentes
-  if file_exists "go.work" || file_exists "pnpm-workspace.yaml" || file_exists "nx.json" || file_exists "turbo.json" || file_exists "lerna.json"; then
-    printf 'monorepo'
-    return
-  fi
-  if has_any_files "services" && has_any_files "packages"; then
-    printf 'monorepo'
-    return
-  fi
-  if has_any_files "apps" && has_any_files "packages"; then
-    printf 'monorepo'
-    return
-  fi
-
-  # Monolito modular: subdivisao interna por dominio/modulo com mais de um subdiretorio
-  if has_any_files "modules" || has_any_files "domains"; then
-    printf 'monolito modular'
-    return
-  fi
-  if [[ -d "$PROJECT_DIR/internal" ]]; then
-    local internal_subdirs
-    internal_subdirs="$(find "$PROJECT_DIR/internal" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
-    if [[ "$internal_subdirs" -ge 3 ]]; then
-      printf 'monolito modular'
-      return
-    fi
-  fi
-
-  # Microservico: Dockerfile + sinais de deploy isolado (manifests k8s, deployments)
-  # Dockerfile sozinho nao e suficiente — exige sinal adicional de isolamento
-  if file_exists "Dockerfile"; then
-    if has_any_files "deployments" || has_any_files "k8s" || has_any_files "helm" || file_exists "skaffold.yaml" || file_exists "kustomization.yaml"; then
-      printf 'microservico'
-      return
-    fi
-  fi
-
-  # Fallback: monolito
-  echo "AVISO: arquitetura nao detectada com alta confianca, assumindo monolito." >&2
-  printf 'monolito'
-}
-
-detect_architectural_pattern() {
-  if has_any_files "domain" || has_any_files "application" || has_any_files "infrastructure" || has_any_files "ports" || has_any_files "adapters"; then
-    printf 'Predominio de Clean Architecture / Hexagonal com fronteiras explicitas entre dominio, aplicacao e infraestrutura.'
-    return
-  fi
-
-  if has_any_files "controllers" || has_any_files "services" || has_any_files "repositories" || has_any_files "models"; then
-    printf 'Predominio de arquitetura em camadas, com separacao entre transporte, servicos, persistencia e modelos.'
-    return
-  fi
-
-  if has_any_files "features" || has_any_files "feature"; then
-    printf 'Predominio de organizacao por funcionalidade / fatiamento vertical, agrupando fluxo e dependencias por capacidade de negocio.'
-    return
-  fi
-
-  if has_any_files "internal"; then
-    printf 'Predominio de packages internos coesos, com estrutura orientada por dominio ou componente.'
-    return
-  fi
-
-  printf 'Padrao arquitetural nao inferido com alta confianca; assumir composicao simples e dependencias explicitas.'
 }
 
 detect_frameworks() {
@@ -320,6 +258,20 @@ EOF
 }
 
 build_dependency_flow() {
+  local active_languages=0
+  should_include_go && active_languages=$((active_languages + 1))
+  should_include_node && active_languages=$((active_languages + 1))
+  should_include_python && active_languages=$((active_languages + 1))
+
+  if [[ "$active_languages" -gt 1 ]]; then
+    cat <<'EOF'
+- Cada stack deve expor contratos por fronteiras estaveis (HTTP/gRPC/eventos/arquivos), sem assumir detalhes internos de runtime de outra linguagem.
+- Mudancas em contratos compartilhados devem atualizar produtores e consumidores da stack afetada e validar cada runtime com seu proprio toolchain.
+- Compartilhar schemas, payloads e semantica operacional e aceitavel; compartilhar convencoes de framework, helpers de runtime ou acoplamento de deploy entre linguagens nao e.
+EOF
+    return
+  fi
+
   if should_include_go; then
     cat <<'EOF'
 - Transporte e adapters devem depender de casos de uso ou servicos explicitos, nao do contrario.

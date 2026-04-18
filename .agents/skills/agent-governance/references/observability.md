@@ -1,4 +1,4 @@
-# Observabilidade Node/TypeScript
+# Observabilidade
 
 ## Objetivo
 Garantir rastreabilidade, diagnostico e visibilidade operacional em producao.
@@ -6,8 +6,8 @@ Garantir rastreabilidade, diagnostico e visibilidade operacional em producao.
 ## Diretrizes
 
 ### Logging Estruturado
-- Usar logging estruturado (JSON) com campos consistentes: `level`, `msg`, `error`, `traceId`, `requestId`.
-- Preferir pino como default por performance. Usar winston quando ja adotado no projeto.
+- Usar logging estruturado (JSON) com campos consistentes: `level`, `msg`, `error`, `trace_id`, `request_id`.
+- Preferir biblioteca de logging estruturado do ecossistema (Node: pino; Python: structlog).
 - Logar em fronteiras de IO, erros e decisoes de negocio relevantes — nao em cada linha.
 - Nao logar dados sensiveis: tokens, senhas, PII, corpos de request com dados pessoais.
 - Usar niveis com intencao: `debug` para desenvolvimento, `info` para eventos operacionais, `warn` para degradacao tolerada, `error` para falha que exige atencao.
@@ -28,6 +28,6 @@ Garantir rastreabilidade, diagnostico e visibilidade operacional em producao.
 - Readiness deve verificar conexoes criticas: banco, cache, filas.
 
 ## Proibido
-- `console.log` em codigo de producao.
+- Output nao estruturado em producao (`console.log`, `print()`).
 - Logar tokens, segredos ou PII.
 - Metrica com label derivado de input do usuario sem sanitizacao.

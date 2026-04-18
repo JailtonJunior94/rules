@@ -20,16 +20,6 @@ check_file() {
   fi
 }
 
-check_codex() {
-  local skill="$1"
-  if grep -q "\"\.agents/skills/$skill\"" "$ROOT_DIR/.codex/config.toml" 2>/dev/null; then
-    PASSED=$((PASSED + 1))
-  else
-    echo "FAIL  codex-config/$skill -> not found in .codex/config.toml"
-    FAILED=$((FAILED + 1))
-  fi
-}
-
 echo "=== Claude agents ==="
 check_file "claude-agent/create-prd" "$ROOT_DIR/.claude/agents/prd-writer.md"
 check_file "claude-agent/create-technical-specification" "$ROOT_DIR/.claude/agents/technical-specification-writer.md"
@@ -53,11 +43,6 @@ check_file "github-agent/bugfix" "$ROOT_DIR/.github/agents/bugfix.agent.md"
 echo "=== Gemini commands ==="
 for skill in create-prd create-technical-specification create-tasks execute-task refactor review analyze-project bugfix object-calisthenics-go go-implementation node-implementation python-implementation; do
   check_file "gemini-cmd/$skill" "$ROOT_DIR/.gemini/commands/${skill}.toml"
-done
-
-echo "=== Codex config ==="
-for skill in agent-governance go-implementation node-implementation python-implementation analyze-project create-prd create-technical-specification create-tasks execute-task refactor review object-calisthenics-go bugfix; do
-  check_codex "$skill"
 done
 
 echo "=== Gemini {{args}} placeholder ==="

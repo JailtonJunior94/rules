@@ -160,6 +160,8 @@ O comportamento do instalador pode ser ajustado com variaveis de ambiente:
 | `LINK_MODE` | `symlink` | usa `symlink` para manter uma unica fonte de verdade ou `copy` para instalar um snapshot local |
 | `GENERATE_CONTEXTUAL_GOVERNANCE` | `1` | quando `1`, gera arquivos contextuais; quando `0`, copia os arquivos base sem personalizacao |
 | `CODEX_SKILL_PROFILE` | `minimal` | controla o conjunto de skills em `.codex/config.toml`: `minimal` carrega o baseline operacional enxuto; `full` inclui tambem skills de planejamento e analise |
+| `DETECT_TOOLCHAIN_MAX_DEPTH` | `4` | profundidade maxima para procurar manifests ao detectar fmt, test e lint |
+| `DETECT_TOOLCHAIN_FOCUS_PATHS` | vazio | lista de paths afetados separados por virgula para priorizar o workspace/package mais relevante |
 
 Exemplos:
 
@@ -187,6 +189,12 @@ Toda logica procedural fica em `.agents/skills/`. Cada skill possui seu proprio 
 
 Claude, Codex, Gemini e Copilot recebem apenas a camada minima necessaria para apontar para a skill correta. O objetivo e evitar divergencia entre plataformas.
 
+Para uso operacional, o baseline recomendado e:
+
+- carregar `AGENTS.md`, `agent-governance` e apenas a skill operacional afetada;
+- carregar skills de planejamento (`analyze-project`, `create-prd`, `create-technical-specification`, `create-tasks`) apenas sob demanda;
+- manter o perfil `minimal` do Codex como default para reduzir custo de contexto.
+
 ### 3. Geracao contextual de governanca
 
 Quando `GENERATE_CONTEXTUAL_GOVERNANCE=1`, o script `.agents/skills/analyze-project/scripts/generate-governance.sh` analisa o projeto alvo e gera instrucoes mais precisas com base em:
@@ -197,6 +205,8 @@ Quando `GENERATE_CONTEXTUAL_GOVERNANCE=1`, o script `.agents/skills/analyze-proj
 - ferramentas instaladas.
 
 O gerador usa `detect-toolchain.sh` como fonte primaria para comandos de validacao quando esse detector consegue inferir fmt, test e lint do projeto, inclusive em manifests de subdiretorios.
+
+Quando houver multiplos manifests elegiveis, o detector pode priorizar o workspace afetado com `DETECT_TOOLCHAIN_FOCUS_PATHS` ou com o segundo argumento posicional do script.
 
 ### 4. Skills por linguagem
 
@@ -380,6 +390,7 @@ Comandos uteis para validar mudancas:
 ```bash
 bash tests/test-generate-governance.sh
 bash tests/test-install.sh
+bash tests/test-context-metrics.sh
 bash tests/test-scripts.sh
 ```
 

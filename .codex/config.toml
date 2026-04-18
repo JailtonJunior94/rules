@@ -1,25 +1,7 @@
+# Perfil enxuto para uso operacional no proprio repositorio.
+# Skills de planejamento devem ser carregadas sob demanda no projeto alvo.
 [[skills.config]]
 path = ".agents/skills/agent-governance"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/go-implementation"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/analyze-project"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/create-prd"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/create-technical-specification"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/create-tasks"
 enabled = true
 
 [[skills.config]]
@@ -32,18 +14,6 @@ enabled = true
 
 [[skills.config]]
 path = ".agents/skills/review"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/node-implementation"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/python-implementation"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/object-calisthenics-go"
 enabled = true
 
 [[skills.config]]

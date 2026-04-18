@@ -1,1 +1,0 @@
-../../agent-governance/references/messaging.md
