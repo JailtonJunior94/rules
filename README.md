@@ -1,277 +1,217 @@
 # ai-governance
 
-Governança reutilizável para agentes de IA em diferentes CLIs, com skills canônicas, adaptadores por ferramenta e geração contextual de instruções para cada projeto-alvo.
+Governança reutilizável para agentes de IA em repositórios reais, com uma base canônica de skills em `.agents/skills/`, adaptadores por ferramenta e geração contextual de instruções para o projeto-alvo.
 
-O objetivo do projeto é oferecer uma base única para instalar e manter instruções operacionais consistentes em repositórios reais, sem duplicar regras entre Claude Code, Codex, Gemini CLI e GitHub Copilot.
+O repositório existe para evitar duplicação de processo entre Claude Code, Codex, Gemini CLI e GitHub Copilot, mantendo uma única fonte de verdade para regras operacionais, referências e fluxos de trabalho.
 
 > Last reviewed: 2026-04-18
 
-## Visão Geral
+## Para quem é
 
-`ai-governance` organiza uma camada compartilhada de governança para agentes de IA que trabalham com código. Em vez de manter prompts, regras e instruções separados para cada ferramenta, o repositório centraliza skills, referências e adaptadores leves em uma única base.
+Este README é voltado para quem quer:
 
-Ele foi pensado para projetos que precisam de previsibilidade operacional em tarefas como:
+- instalar governança de IA em outro repositório;
+- entender o que `install.sh` e `upgrade.sh` realmente fazem;
+- evoluir as skills e os adaptadores deste projeto sem quebrar o fluxo existente.
 
-- análise e entendimento de contexto;
-- review e refactor;
-- bugfix com validação;
-- criação de PRD, especificação técnica e tarefas;
-- execução guiada por skill.
+## O que o projeto entrega
 
-## Principais Benefícios
+### Base canônica
 
-- uma fonte canônica única em `.agents/skills/`;
-- adaptadores leves para múltiplas ferramentas, sem duplicação de processo;
-- geração contextual de `AGENTS.md` e arquivos auxiliares a partir do projeto-alvo;
-- versionamento de skills para atualização controlada em instalações por cópia;
-- carregamento sob demanda de referências para reduzir ruído e custo de contexto.
+Toda a lógica procedural fica em `.agents/skills/`. Hoje o repositório contém:
 
-## Quick Start
+- skills de processo: `agent-governance`, `analyze-project`, `bugfix`, `create-prd`, `create-technical-specification`, `create-tasks`, `execute-task`, `refactor`, `review`;
+- skills de linguagem: `go-implementation`, `node-implementation`, `python-implementation`;
+- skill adicional de design incremental para Go: `object-calisthenics-go`.
 
-```bash
-bash install.sh /caminho/do/projeto
-```
+### Adaptadores por ferramenta
 
-O instalador pergunta:
+Os scripts do projeto geram ou instalam integrações para:
 
-1. quais ferramentas devem ser instaladas;
-2. quais linguagens devem receber skills de implementação;
-3. gera a governança contextual no projeto-alvo.
-
-Para revisar a instalação antes de gravar arquivos:
-
-```bash
-bash install.sh --dry-run /caminho/do/projeto
-```
-
-## Quando Usar
-
-Use este repositório quando você quiser:
-
-- padronizar o comportamento de agentes em diferentes ferramentas;
-- instalar governança de IA em um projeto existente sem duplicar regras;
-- adaptar instruções ao contexto real do repositório-alvo;
-- manter skills versionadas e atualizáveis ao longo do tempo.
-
-## Ferramentas Suportadas
-
-| Ferramenta | Integração |
-|------------|------------|
-| Claude Code | `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`, `.claude/rules/`, `.claude/scripts/` |
-| Codex | `.codex/config.toml` |
-| Gemini CLI | `GEMINI.md`, `.gemini/commands/` |
-| GitHub Copilot | `.github/copilot-instructions.md`, `.github/agents/`, `.github/skills/` |
-
-## O Que É Instalado
-
-Dependendo das ferramentas e linguagens selecionadas durante a instalação, o projeto-alvo recebe:
-
-| Tipo | Arquivos ou diretórios |
-|------|------------------------|
-| Base canônica | `AGENTS.md`, `.agents/skills/` |
-| Claude Code | `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`, `.claude/rules/`, `.claude/scripts/` |
+| Ferramenta | Arquivos gerados ou instalados |
+|------------|--------------------------------|
+| Claude Code | `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`, `.claude/rules/`, `.claude/scripts/`, `.claude/hooks/` |
 | Gemini CLI | `GEMINI.md`, `.gemini/commands/` |
 | Codex | `.codex/config.toml` |
-| GitHub Copilot | `.github/copilot-instructions.md`, `.github/agents/`, `.github/skills/` |
+| GitHub Copilot | `.github/copilot-instructions.md`, `.github/skills/`, `.github/agents/` |
 
-As skills canônicas ficam sempre em `.agents/skills/`. Os adaptadores apenas referenciam ou copiam essa base, sem redefinir o processo.
+Os adaptadores não redefinem o processo. Eles apontam para `.agents/skills/`, que continua sendo a fonte de verdade.
 
-## Estrutura do Repositório
+### Geração contextual
+
+Quando `GENERATE_CONTEXTUAL_GOVERNANCE=1`:
+
+- `install.sh` chama `.agents/skills/analyze-project/scripts/generate-governance.sh`;
+- o gerador tenta classificar a arquitetura do projeto-alvo;
+- o gerador detecta stack principal, frameworks e sinais de toolchain;
+- `AGENTS.md` e arquivos auxiliares passam a refletir o contexto do repositório instalado.
+
+## Estrutura do repositório
 
 | Caminho | Papel |
 |--------|-------|
-| `.agents/skills/` | fonte canônica das skills e referências |
-| `.claude/` | integração e wrappers para Claude Code |
-| `.gemini/` | comandos para Gemini CLI |
-| `.codex/` | configuração para Codex |
-| `.github/` | integração para GitHub Copilot |
-| `tests/` | testes de snapshot, scripts e fluxo de instalação |
-| `install.sh` | instalador interativo da governança |
-| `upgrade.sh` | verificador e atualizador de skills copiadas |
+| `.agents/skills/` | skills canônicas, assets, references e scripts de suporte |
+| `.claude/` | adaptadores e arquivos base para Claude Code |
+| `.codex/` | configuração base do Codex para este repositório |
+| `.gemini/` | comandos base para Gemini CLI |
+| `.github/` | adaptadores e workflow de CI |
+| `scripts/` | geração de adaptadores, utilitários e helpers compartilhados |
+| `tests/` | testes end-to-end, validação de heurísticas e snapshots |
+| `install.sh` | instalação da governança em projeto-alvo |
+| `upgrade.sh` | verificação e atualização de skills instaladas em modo `copy` |
+| `VERSION` | versão do pacote de governança |
 
 ## Instalação
 
 ### Pré-requisitos
 
-Antes de instalar em um projeto-alvo, tenha no ambiente:
+Para instalar em outro projeto, o código exige:
 
 - `bash`;
-- permissões de escrita no diretório-alvo;
-- um projeto existente para receber a governança.
+- diretório-alvo já existente;
+- permissão de escrita no diretório-alvo.
 
-Para desenvolvimento e execução de todos os testes deste repositório, `python3` também é utilizado em scripts auxiliares e validações.
+Para rodar a suíte completa deste repositório, `python3` também é usado em scripts auxiliares e no CI.
 
-### Fluxo Básico
-
-Execute:
+### Fluxo básico
 
 ```bash
 bash install.sh /caminho/do/projeto
 ```
 
-Durante a execução, o instalador pergunta:
+No modo interativo, o script pergunta:
 
-1. quais ferramentas devem ser instaladas: `claude`, `gemini`, `codex`, `copilot` ou todas;
+1. quais ferramentas instalar: `claude`, `gemini`, `codex`, `copilot` ou todas;
 2. quais linguagens devem receber skills de implementação: `go`, `node`, `python` ou todas.
 
-Se nenhuma linguagem for informada, o instalador mantém apenas as skills processuais base e não adiciona skills de linguagem.
+Se nenhuma linguagem for escolhida, apenas as skills processuais são instaladas.
 
-### Modo Não Interativo
-
-Para uso em scripts, CI ou automação, passe `--tools` e `--langs` diretamente:
+### Modo não interativo
 
 ```bash
-# instalar apenas Claude e Gemini, com Go e Python
+# Claude + Gemini com Go e Python
 bash install.sh --tools claude,gemini --langs go,python /caminho/do/projeto
 
-# instalar todas as ferramentas e todas as linguagens
+# todas as ferramentas e todas as linguagens
 bash install.sh --tools all --langs all /caminho/do/projeto
 
-# instalar apenas Codex e Copilot, sem skills de linguagem
+# apenas Codex e Copilot, sem skills de linguagem
 bash install.sh --tools codex,copilot /caminho/do/projeto
 ```
 
 Valores aceitos:
-- `--tools`: `claude`, `gemini`, `codex`, `copilot` ou `all`
-- `--langs`: `go`, `node`, `python` ou `all`
 
-### Dry Run
+- `--tools`: `claude`, `gemini`, `codex`, `copilot`, `all`
+- `--langs`: `go`, `node`, `python`, `all`
 
-Para inspecionar o que seria criado sem alterar arquivos:
+### Dry run
 
 ```bash
 bash install.sh --dry-run /caminho/do/projeto
 ```
 
-Combinável com modo não interativo:
+Esse modo mostra o que seria criado sem alterar arquivos.
 
-```bash
-bash install.sh --tools all --langs go --dry-run /caminho/do/projeto
-```
+### Modos de instalação e variáveis
 
-Esse modo é útil quando você quer auditar a instalação antes de gravar arquivos em um repositório real.
-
-### Modos de Instalação
-
-O comportamento do instalador pode ser ajustado com variáveis de ambiente:
-
-| Variável | Default | Efeito |
-|----------|---------|--------|
-| `LINK_MODE` | `symlink` | usa `symlink` para manter uma única fonte de verdade ou `copy` para instalar um snapshot local |
-| `GENERATE_CONTEXTUAL_GOVERNANCE` | `1` | quando `1`, gera arquivos contextuais; quando `0`, copia os arquivos base sem personalização |
-| `CODEX_SKILL_PROFILE` | `minimal` | controla o conjunto de skills em `.codex/config.toml`: `minimal` carrega o baseline operacional enxuto; `full` inclui também skills de planejamento e análise |
-| `DETECT_TOOLCHAIN_MAX_DEPTH` | `4` | profundidade máxima para procurar manifests ao detectar fmt, test e lint |
-| `DETECT_TOOLCHAIN_FOCUS_PATHS` | vazio | lista de paths afetados separados por vírgula para priorizar o workspace/package mais relevante |
+| Variável | Default | Efeito validado no código |
+|----------|---------|---------------------------|
+| `LINK_MODE` | `symlink` | usa symlinks para as skills canônicas; com `copy`, instala um snapshot local |
+| `GENERATE_CONTEXTUAL_GOVERNANCE` | `1` | com `1`, gera governança contextual; com `0`, copia os arquivos base sem personalização |
+| `CODEX_SKILL_PROFILE` | `minimal` | controla o conjunto de skills no `.codex/config.toml`; `full` inclui também skills de planejamento |
+| `DETECT_TOOLCHAIN_MAX_DEPTH` | `4` | profundidade máxima usada na busca de manifests para detecção de toolchain |
+| `DETECT_TOOLCHAIN_FOCUS_PATHS` | vazio | prioriza paths afetados ao detectar o workspace ou package mais relevante |
 
 Exemplos:
 
 ```bash
-# instalação padrão com symlinks
+# instalação padrão com symlink
 bash install.sh /caminho/do/projeto
 
 # instalação portável com cópia
 LINK_MODE=copy bash install.sh /caminho/do/projeto
 
-# instalação sem geração contextual
+# sem geração contextual
 GENERATE_CONTEXTUAL_GOVERNANCE=0 bash install.sh /caminho/do/projeto
 
-# Codex com perfil completo de skills
+# perfil completo para Codex
 CODEX_SKILL_PROFILE=full bash install.sh --tools codex --langs all /caminho/do/projeto
 ```
 
-## Como o Projeto Funciona
+## O que é instalado no projeto-alvo
 
-### 1. Fonte canônica
+Sempre:
 
-Toda lógica procedural fica em `.agents/skills/`. Cada skill possui seu próprio `SKILL.md`, referências carregadas sob demanda e, quando necessário, scripts auxiliares.
+- `AGENTS.md`
+- `.agents/skills/` com as skills selecionadas
 
-### 2. Adaptadores leves por ferramenta
+Quando a ferramenta correspondente é selecionada:
 
-Claude, Codex, Gemini e Copilot recebem apenas a camada mínima necessária para apontar para a skill correta. O objetivo é evitar divergência entre plataformas.
+- Claude Code: `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`, `.claude/rules/`, `.claude/scripts/`, `.claude/hooks/`
+- Gemini CLI: `GEMINI.md`, `.gemini/commands/`
+- Codex: `.codex/config.toml`
+- GitHub Copilot: `.github/copilot-instructions.md`, `.github/skills/`, `.github/agents/`
 
-Para uso operacional, o baseline recomendado é:
+Quando `LINK_MODE=copy`, as skills são copiadas para o projeto-alvo. Quando `LINK_MODE=symlink`, o projeto-alvo aponta para este repositório.
 
-- carregar `AGENTS.md`, `agent-governance` e apenas a skill operacional afetada;
-- carregar skills de planejamento (`analyze-project`, `create-prd`, `create-technical-specification`, `create-tasks`) apenas sob demanda;
-- manter o perfil `minimal` do Codex como default para reduzir custo de contexto.
+## Como o projeto funciona
 
-### 3. Geração contextual de governança
+### 1. Fonte única de verdade
 
-Quando `GENERATE_CONTEXTUAL_GOVERNANCE=1`, o script `.agents/skills/analyze-project/scripts/generate-governance.sh` analisa o projeto-alvo e gera instruções mais precisas com base em:
+As skills canônicas vivem em `.agents/skills/`. Adaptadores de ferramenta são somente wrappers finos.
 
-- tipo de arquitetura detectado;
-- stack principal;
-- frameworks encontrados;
-- ferramentas instaladas.
+### 2. Perfil enxuto para Codex
 
-O gerador usa `detect-toolchain.sh` como fonte primária para comandos de validação quando esse detector consegue inferir fmt, test e lint do projeto, inclusive em manifests de subdiretórios.
-
-Quando houver múltiplos manifests elegíveis, o detector pode priorizar o workspace afetado com `DETECT_TOOLCHAIN_FOCUS_PATHS` ou com o segundo argumento posicional do script.
-
-### 4. Skills por linguagem
-
-As skills base são sempre instaladas. Skills de implementação entram conforme a seleção de linguagem:
-
-| Linguagem | Skills instaladas |
-|-----------|-------------------|
-| Go | `go-implementation`, `object-calisthenics-go` |
-| Node.js / TypeScript | `node-implementation` |
-| Python | `python-implementation` |
-
-As skills base instaladas por padrão incluem:
+O perfil padrão do Codex é `minimal`. Pelo código de `scripts/lib/codex-config.sh`, ele habilita:
 
 - `agent-governance`
-- `analyze-project`
-- `bugfix`
-- `create-prd`
-- `create-technical-specification`
-- `create-tasks`
 - `execute-task`
 - `refactor`
 - `review`
+- `bugfix`
 
-## Exemplo de Uso
+As skills de planejamento entram no perfil `full` ou quando o projeto-alvo decide carregá-las sob demanda.
 
-Fluxo típico para adotar o projeto em outro repositório:
+### 3. Geração de adaptadores
 
-```bash
-# 1. instalar a governança
-bash install.sh /caminho/do/projeto
+Os scripts em `scripts/` geram adaptadores a partir das skills instaladas:
 
-# 2. verificar o que foi gerado no projeto-alvo
-ls -la /caminho/do/projeto
+- `scripts/generate-adapters.sh` gera wrappers de Claude e GitHub e delega a geração do Gemini;
+- `scripts/generate-gemini-commands.sh` cria `.gemini/commands/*.toml` a partir do frontmatter e dos assets de cada skill.
 
-# 3. em instalações por cópia, checar defasagem futuramente
-bash upgrade.sh --check /caminho/do/projeto
-```
+### 4. Geração contextual
 
-## Detecção Contextual
+O gerador contextual usa:
 
-O gerador contextual usa heurísticas locais para reduzir falsos positivos.
+- `.agents/skills/agent-governance/scripts/detect-architecture.sh`
+- `.agents/skills/agent-governance/scripts/detect-toolchain.sh`
+- `scripts/lib/find-manifests.sh`
 
-### Tipos de arquitetura identificados
+Hoje a detecção de arquitetura cobre:
 
-| Tipo | Sinais principais |
-|------|-------------------|
-| Monorepo | `go.work`, `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, `lerna.json`, ou combinações como `apps/` + `packages/` |
-| Monolito modular | `modules/`, `domains/` ou `internal/` com múltiplos subdiretórios |
-| Microserviço | `Dockerfile` combinado com sinais de deploy isolado como `k8s/`, `helm/`, `deployments/`, `skaffold.yaml` ou `kustomization.yaml` |
-| Monolito | fallback quando não há sinal forte suficiente |
+- `monorepo`
+- `monolito modular`
+- `microservico`
+- `monolito` como fallback conservador
 
-### Stacks detectadas
+Para stack principal, o gerador tenta inferir sinais de:
 
-Atualmente o gerador identifica, quando presentes na raiz ou em subdiretórios relevantes:
+- Go
+- Node.js
+- Python
+- Java/Kotlin
+- Rust
+- C#/.NET
 
-- Go;
-- Node.js;
-- Python;
-- Java/Kotlin.
+Para frameworks, há detecção explícita para alguns casos em manifests encontrados:
 
-Para Go, o gerador também tenta inferir frameworks como `Gin`, `Echo`, `Fiber`, `gRPC` e `Connect`.
+- Go: `Gin`, `Echo`, `Fiber`, `gRPC`, `Connect`
+- Node.js: `Express`, `NestJS`, `Fastify`, `Next.js`, `Hono`
+- Python: `FastAPI`, `Django`, `Flask`
 
-## Atualização de Skills
+## Atualização de skills
 
-Quando a instalação é feita com `LINK_MODE=copy`, o projeto-alvo passa a ter uma cópia local das skills. Nesse caso, use `upgrade.sh` para verificar defasagem e aplicar atualizações.
+Use `upgrade.sh` quando a instalação tiver sido feita em modo `copy`.
 
 ### Verificar sem alterar
 
@@ -285,21 +225,20 @@ bash upgrade.sh --check /caminho/do/projeto
 bash upgrade.sh /caminho/do/projeto
 ```
 
-O script compara o campo `version` do frontmatter de cada `SKILL.md` da fonte com a versão instalada no projeto-alvo.
+O script compara:
 
-Além da versão do `SKILL.md`, o `upgrade.sh` também detecta divergências de conteúdo por checksum e diferenças no diretório `references/` quando ele existe.
+- `version` no frontmatter de cada `SKILL.md`;
+- checksum do conteúdo do `SKILL.md`;
+- checksum e diferenças do diretório `references/`, quando existir.
 
-Após atualizar skills copiadas, o script também tenta:
+Se houver atualização real e o projeto não estiver usando symlink, o script também pode:
 
 - re-gerar adaptadores de Claude, GitHub e Gemini;
+- sincronizar `.claude/rules/` e `.claude/scripts/`;
 - re-gerar `.codex/config.toml` com base nas skills instaladas;
-- re-gerar a governança contextual quando o projeto-alvo já possui `AGENTS.md`.
-
-Se o projeto estiver usando symlinks, o script detecta isso e evita cópias desnecessárias.
+- re-gerar a governança contextual quando `AGENTS.md` existir no projeto-alvo.
 
 ### Filtrar por linguagem
-
-Quando você quiser revisar ou atualizar apenas skills de linguagem específicas:
 
 ```bash
 # verificar apenas skills de Go
@@ -313,44 +252,39 @@ Valores aceitos em `--langs`: `go`, `node`, `python`.
 
 ## Desenvolvimento
 
-### Validações disponíveis
+### Testes disponíveis
 
-Este repositório possui múltiplos gates de validação para instalação, geração contextual, adaptadores, referências e orçamento de contexto:
+Os scripts de teste presentes no repositório hoje são:
 
 ```bash
-# valida snapshots do gerador contextual
 bash tests/test-generate-governance.sh
-
-# valida o fluxo de instalação end-to-end
 bash tests/test-install.sh
-
-# valida scripts auxiliares
-bash tests/test-scripts.sh
-
-# valida upgrade e regeneração de adaptadores
 bash tests/test-upgrade.sh
-
-# valida orçamento de contexto e perfil minimal do Codex
+bash tests/test-scripts.sh
 bash tests/test-context-metrics.sh
-
-# valida paridade de adaptadores gerados
 bash tests/test-adapter-parity.sh
-
-# valida referências declaradas nas skills
 bash tests/test-skill-references.sh
+bash tests/test-detect-architecture.sh
+bash tests/test-detect-toolchain.sh
+bash tests/test-skill-frontmatter.sh
 ```
 
-### Atualização intencional de snapshots
-
-Se houver mudança deliberada na saída do gerador contextual:
+Para atualização intencional de snapshots do gerador contextual:
 
 ```bash
 bash tests/test-generate-governance.sh --update
 ```
 
-## Estrutura de Testes
+### CI
 
-O diretório `tests/fixtures/` contém projetos artificiais que exercitam os cenários principais de detecção:
+O workflow em `.github/workflows/test.yml` executa essas suítes em:
+
+- `ubuntu-24.04`
+- `macos-15`
+
+### Fixtures e snapshots
+
+Os testes usam fixtures em `tests/fixtures/` para validar diferentes cenários, incluindo:
 
 - `go-microservice`
 - `go-modular`
@@ -359,83 +293,38 @@ O diretório `tests/fixtures/` contém projetos artificiais que exercitam os cen
 - `python-monorepo`
 - `polyglot-monorepo`
 
-Os snapshots esperados ficam em `tests/snapshots/` e são comparados contra o `AGENTS.md` gerado para cada fixture.
+Os snapshots esperados do gerador ficam em `tests/snapshots/`.
 
-## Decisões Importantes de Design
+## Limitações e observações
 
-### Portabilidade sem duplicação
+- `install.sh` e `upgrade.sh` rejeitam o próprio repositório `ai-governance` como alvo;
+- o diretório-alvo precisa existir antes da execução;
+- a geração contextual depende exclusivamente dos sinais encontrados localmente;
+- quando não há sinal forte suficiente, o gerador usa fallback conservador;
+- não há arquivo `LICENSE` nem `CONTRIBUTING.md` neste repositório no estado atual.
 
-O projeto separa claramente:
-
-- a fonte de verdade procedural em `.agents/skills/`;
-- as regras canônicas em `AGENTS.md`;
-- os adaptadores específicos de cada ferramenta.
-
-Isso reduz manutenção duplicada e preserva consistência entre CLIs.
-
-### Menor carga de contexto
-
-As referências das skills são carregadas sob demanda. Em vez de enviar grandes blocos fixos para toda tarefa, cada skill define quando ler regras de DDD, segurança, erros, testes ou padrões mais específicos.
-
-### Atualização controlada
-
-O campo `version` no frontmatter de cada `SKILL.md` permite comparar fonte e destino ao usar instalação por cópia. Isso fecha o ciclo de manutenção para projetos que não usam symlink.
-
-## Limitações e Observações
-
-- `install.sh` não permite instalar a governança no próprio repositório `ai-governance`;
-- o diretório-alvo precisa existir antes da instalação;
-- a geração contextual depende dos sinais encontrados localmente no projeto-alvo;
-- quando nenhum padrão forte é detectado, o gerador assume um fallback conservador e registra isso no resultado.
-
-## Fluxo Recomendado de Uso
-
-Para adotar este projeto em outro repositório:
-
-1. execute `bash install.sh /caminho/do/projeto`;
-2. escolha as ferramentas de IA que o projeto realmente usa;
-3. selecione apenas as linguagens relevantes para reduzir ruído;
-4. revise os arquivos gerados no projeto-alvo;
-5. se optar por `LINK_MODE=copy`, inclua `upgrade.sh --check` na manutenção periódica.
-
-## Arquivos Principais
-
-| Arquivo | Finalidade |
-|--------|------------|
-| `AGENTS.md` | regra canônica compartilhada entre agentes |
-| `CLAUDE.md` | adaptador base para Claude Code |
-| `GEMINI.md` | adaptador base para Gemini CLI |
-| `install.sh` | instalação interativa no projeto-alvo |
-| `upgrade.sh` | verificação e atualização de skills copiadas |
-
-## Contribuição
-
-Contribuições devem preservar o contrato entre a base canônica e os adaptadores. Ao propor mudanças:
-
-1. altere a skill canônica primeiro, evitando replicar lógica nos adaptadores;
-2. mantenha a menor mudança segura e coerente com o padrão atual;
-3. atualize testes e snapshots quando a saída esperada mudar;
-4. revise o README se o fluxo operacional do projeto mudar.
-
-Comandos úteis para validar mudanças:
+## Fluxo recomendado
 
 ```bash
-bash tests/test-generate-governance.sh
-bash tests/test-install.sh
-bash tests/test-context-metrics.sh
-bash tests/test-scripts.sh
-bash tests/test-upgrade.sh
+# 1. instalar a governança
+bash install.sh /caminho/do/projeto
+
+# 2. revisar o que foi gerado
+ls -la /caminho/do/projeto
+
+# 3. em instalações por cópia, monitorar desatualização
+bash upgrade.sh --check /caminho/do/projeto
 ```
 
-## Roadmap Natural do Repositório
+## Contribuindo
 
-Este projeto tende a evoluir em quatro frentes principais:
+Se você for evoluir o projeto:
 
-- novas skills canônicas;
-- refinamento das heurísticas de detecção contextual;
-- melhoria dos adaptadores por ferramenta;
-- fortalecimento de validações e testes de regressão.
+1. altere primeiro a skill canônica em `.agents/skills/`;
+2. evite mover lógica para adaptadores quando a fonte correta for a skill;
+3. atualize testes, snapshots ou fixtures quando a saída esperada mudar;
+4. revise o `README.md` quando o comportamento operacional mudar.
 
 ## Resumo
 
-`ai-governance` é uma base reutilizável para instalar, adaptar e manter governança de agentes de IA em projetos reais. O repositório combina fonte canônica única, adaptadores multiplataforma, geração contextual e estratégia de atualização, com foco em consistência operacional e baixo custo de manutenção.
+`ai-governance` centraliza skills canônicas para agentes de IA, gera adaptadores leves para múltiplas ferramentas e contextualiza a governança no projeto-alvo. O foco do repositório é manter consistência operacional com a menor duplicação possível.

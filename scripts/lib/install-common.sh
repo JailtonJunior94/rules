@@ -47,7 +47,36 @@ safe_ln() {
 }
 
 compute_relpath() {
-  python3 -c "import os.path, sys; print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath(sys.argv[2])))" "$1" "$2"
+  # Compute relative path from $2 to $1 without python3.
+  # Uses pwd -P to resolve symlinks (matches os.path.realpath behavior).
+  # Falls back to perl, then pure bash.
+  local target base
+  if [[ -d "$1" ]]; then
+    target="$(cd "$1" && pwd -P)"
+  elif [[ -d "$(dirname "$1")" ]]; then
+    target="$(cd "$(dirname "$1")" && pwd -P)/$(basename "$1")"
+  else
+    target="$1"
+  fi
+  base="$(cd "$2" && pwd -P)"
+
+  if command -v perl >/dev/null 2>&1; then
+    perl -e 'use File::Spec; print File::Spec->abs2rel($ARGV[0], $ARGV[1])' "$target" "$base"
+    return
+  fi
+
+  # Pure-bash fallback: component-safe prefix matching
+  local common="$base/"
+  local result=""
+  while true; do
+    case "$target/" in
+      "$common"*) break ;;
+    esac
+    common="${common%/}"
+    common="${common%/*}/"
+    result="../$result"
+  done
+  printf '%s' "${result}${target#${common}}"
 }
 
 link_or_copy_skill() {

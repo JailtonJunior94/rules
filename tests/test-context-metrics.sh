@@ -49,9 +49,9 @@ PY
   fi
 }
 
-check_baseline_budget "go" 3800
-check_baseline_budget "node" 3100
-check_baseline_budget "python" 3100
+check_baseline_budget "go" 4700
+check_baseline_budget "node" 3800
+check_baseline_budget "python" 3800
 
 if METRICS_JSON="$metrics_json" python3 - <<'PY'
 import json

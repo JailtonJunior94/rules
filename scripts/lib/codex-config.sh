@@ -4,6 +4,10 @@
 #      build_codex_config <include_go:0|1> <include_node:0|1> <include_python:0|1>
 
 build_codex_config() {
+  # Generates .codex/config.toml.
+  # Codex CLI reads AGENTS.md from the project root for session instructions.
+  # The [[skills.config]] entries are metadata used by upgrade.sh for tracking;
+  # they are not part of the official Codex CLI spec.
   local include_go="${1:-0}"
   local include_node="${2:-0}"
   local include_python="${3:-0}"

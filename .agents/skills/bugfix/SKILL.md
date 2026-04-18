@@ -54,3 +54,4 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 * Se uma correcao alterar comportamento publico, parar e explicitar a mudanca a menos que ela tenha sido solicitada.
 * Se `go test ./...` ou o equivalente do projeto falhar apos a correcao, analisar o log de falha antes de reexecutar.
 * Se a baseline do repositorio ja estiver quebrada, separar claramente a falha preexistente das falhas introduzidas pela correcao.
+* Respeitar o limite de profundidade de invocacao definido em `.agents/skills/agent-governance/SKILL.md`. Bugfix nao deve re-invocar review se ja estiver sendo executado dentro de um ciclo review -> bugfix.

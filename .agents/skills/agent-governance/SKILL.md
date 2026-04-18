@@ -35,7 +35,12 @@ description: Orquestra regras de governanca, DDD, tratamento de erros, seguranca
 4. Registrar falhas com o comando exato e um diagnostico curto.
 5. Se o projeto oferecer `detect-toolchain.sh`, usar os comandos retornados em vez de adivinhar.
 
+## Controle de Profundidade de Invocacao
+
+Quando uma skill invoca outra (ex: execute-task -> review -> bugfix), manter um contador logico de profundidade. Se a profundidade exceder 2 niveis de invocacao cruzada (ex: execute-task invoca review que invoca bugfix que tentaria invocar review novamente), parar a cadeia e retornar `failed` com diagnostico: "limite de profundidade de invocacao atingido". Isso previne loops entre review e bugfix.
+
 ## Tratamento de Erros
 * Se a tarefa nao deixar claro quais referencias carregar, aplicar `AGENTS.md` como baseline e ler apenas os arquivos tematicos diretamente ligados a superficie alterada.
 * Se houver conflito entre convencao local identificada e regra generica desta skill, priorizar a arquitetura e os contratos ja existentes no contexto analisado e registrar a suposicao.
 * Se um comando de validacao nao existir no contexto analisado, nao inventar substitutos; registrar a ausencia explicitamente.
+* Se o limite de profundidade de invocacao for atingido, nao tentar contornar; registrar o ciclo e retornar o estado bloqueante.

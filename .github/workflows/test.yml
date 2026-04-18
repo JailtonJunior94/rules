@@ -23,6 +23,9 @@ jobs:
           - adapter-parity
           - install
           - upgrade
+          - detect-architecture
+          - detect-toolchain
+          - skill-frontmatter
     steps:
       - uses: actions/checkout@v4
 

@@ -1,6 +1,7 @@
 ---
 name: refactor
 version: 1.0.0
+depends_on: [review]
 description: Planeja ou executa refatorações incrementais seguras preservando comportamento e coletando evidências de não regressão. Use quando uma refatoração delimitada precisar de orientação consultiva ou execução com validação e revisão. Não use para entrega de nova funcionalidade, definição de escopo de produto ou reescritas cosméticas sem alvo verificado.
 ---
 
@@ -51,3 +52,4 @@ description: Planeja ou executa refatorações incrementais seguras preservando 
 * Se a refatoração solicitada alterar comportamento público, explicitar isso e parar, a menos que a mudança de comportamento tenha sido pedida.
 * Se o codebase não tiver testes adequados para proteger uma refatoração arriscada, reduzir o escopo da refatoração ou adicionar cobertura faltante antes de prosseguir.
 * Se uma baseline quebrada impedir provar não regressão, documentar a falha da baseline separadamente das falhas induzidas pela refatoração.
+* Respeitar o limite de profundidade de invocação definido em `.agents/skills/agent-governance/SKILL.md`. Se review invocar bugfix e bugfix precisar de nova review, esta é a profundidade máxima.

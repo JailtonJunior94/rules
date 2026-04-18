@@ -14,3 +14,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.bak
+
+# Governance telemetry (opt-in, local only)
+.agents/telemetry.log

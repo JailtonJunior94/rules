@@ -148,6 +148,39 @@ refs_hash() {
   (cd "$refs_dir" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}')
 }
 
+# Lista arquivos de references/ que diferem entre fonte e alvo.
+refs_changed_files() {
+  local source_refs="$1"
+  local target_refs="$2"
+  [[ -d "$source_refs" ]] || return
+  [[ -d "$target_refs" ]] || return
+
+  # Arquivos que existem na fonte
+  local source_files target_files
+  source_files="$(cd "$source_refs" && find . -type f | LC_ALL=C sort)"
+  target_files="$(cd "$target_refs" && find . -type f | LC_ALL=C sort)"
+
+  # Novos ou modificados na fonte
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    if [[ ! -f "$target_refs/$f" ]]; then
+      printf '    + %s (novo)\n' "${f#./}"
+    elif ! diff -q "$source_refs/$f" "$target_refs/$f" > /dev/null 2>&1; then
+      printf '    ~ %s (modificado)\n' "${f#./}"
+    fi
+  done <<< "$source_files"
+
+  # Removidos da fonte
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    if [[ ! -f "$source_refs/$f" ]]; then
+      printf '    - %s (removido)\n' "${f#./}"
+    fi
+  done <<< "$target_files"
+}
+
+SOURCE_VERSION="$(cat "$SOURCE_DIR/VERSION" 2>/dev/null || echo 'unknown')"
+echo "ai-governance $SOURCE_VERSION"
 echo "Verificando skills em: $PROJECT_DIR"
 echo "Fonte: $SOURCE_DIR"
 echo ""
@@ -194,6 +227,7 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
       target_refs_hash="$(refs_hash "$PROJECT_DIR/.agents/skills/$skill_name/references")"
       if [[ -n "$source_refs_hash" && "$source_refs_hash" != "$target_refs_hash" ]]; then
         echo "  REFS DIVERGENTES  $skill_name ($target_version, references/ checksum diferente)"
+        refs_changed_files "$SOURCE_DIR/.agents/skills/$skill_name/references" "$PROJECT_DIR/.agents/skills/$skill_name/references"
         REFS_DIVERGENT=$((REFS_DIVERGENT + 1))
         OUTDATED=$((OUTDATED + 1))
       else
@@ -264,10 +298,22 @@ if [[ "$CHECK_ONLY" -eq 0 && "$OUTDATED" -gt 0 ]]; then
   fi
 fi
 
-# Re-gerar governanca contextual se AGENTS.md existir e houve atualizacoes
+# Re-gerar governanca contextual se AGENTS.md existir e houve atualizacoes ou schema divergente
 GOVERNANCE_GENERATOR="$SOURCE_DIR/.agents/skills/analyze-project/scripts/generate-governance.sh"
 
-if [[ "$CHECK_ONLY" -eq 0 && "$OUTDATED" -gt 0 && -f "$PROJECT_DIR/AGENTS.md" && -f "$GOVERNANCE_GENERATOR" ]]; then
+# Verificar se schema version do AGENTS.md mudou (indica necessidade de re-geracao)
+SCHEMA_NEEDS_REGEN=0
+if [[ -f "$PROJECT_DIR/AGENTS.md" && -f "$SOURCE_DIR/.agents/skills/analyze-project/assets/agents-template.md" ]]; then
+  _target_schema="$(grep -o 'governance-schema: [0-9.]*' "$PROJECT_DIR/AGENTS.md" 2>/dev/null | awk '{print $2}' || true)"
+  _source_schema="$(grep -o 'governance-schema: [^}]*' "$SOURCE_DIR/.agents/skills/analyze-project/assets/agents-template.md" 2>/dev/null | awk '{print $2}' || true)"
+  # Se o template tem schema mas o alvo nao, ou as versoes diferem, re-gerar
+  if [[ -n "$_source_schema" && "$_source_schema" != *"{{"* && "$_source_schema" != "$_target_schema" ]]; then
+    echo "  SCHEMA DIVERGENTE  AGENTS.md (fonte: ${_source_schema:-ausente}, alvo: ${_target_schema:-ausente})"
+    SCHEMA_NEEDS_REGEN=1
+  fi
+fi
+
+if [[ "$CHECK_ONLY" -eq 0 && ( "$OUTDATED" -gt 0 || "$SCHEMA_NEEDS_REGEN" -gt 0 ) && -f "$PROJECT_DIR/AGENTS.md" && -f "$GOVERNANCE_GENERATOR" ]]; then
   echo ""
   echo "-> Re-gerando governanca contextual apos atualizacao de skills..."
 

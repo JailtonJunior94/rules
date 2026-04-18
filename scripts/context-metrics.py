@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def estimate_tokens(text: str) -> int:
-    return round(len(text) / 4)
+    """chars/3.5 — more accurate than chars/4 for mixed PT-BR/English with BPE tokenizers."""
+    return round(len(text) / 3.5)
 
 
 def file_metrics(path: Path) -> dict[str, int | str]:
@@ -66,6 +67,65 @@ def baseline_metrics() -> dict[str, dict[str, int | list[str]]]:
     return result
 
 
+def flow_metrics() -> dict[str, dict[str, int | list[str]]]:
+    """Estimate token cost for common operational flows (baseline + skill(s))."""
+    flows = {
+        "execute-task (Go)": [
+            ROOT / "AGENTS.md",
+            ROOT / ".agents/skills/agent-governance/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/references/architecture.md",
+            ROOT / ".agents/skills/execute-task/SKILL.md",
+            ROOT / ".agents/skills/review/SKILL.md",
+        ],
+        "execute-task (Node)": [
+            ROOT / "AGENTS.md",
+            ROOT / ".agents/skills/agent-governance/SKILL.md",
+            ROOT / ".agents/skills/node-implementation/SKILL.md",
+            ROOT / ".agents/skills/node-implementation/references/architecture.md",
+            ROOT / ".agents/skills/execute-task/SKILL.md",
+            ROOT / ".agents/skills/review/SKILL.md",
+        ],
+        "execute-task (Python)": [
+            ROOT / "AGENTS.md",
+            ROOT / ".agents/skills/agent-governance/SKILL.md",
+            ROOT / ".agents/skills/python-implementation/SKILL.md",
+            ROOT / ".agents/skills/python-implementation/references/architecture.md",
+            ROOT / ".agents/skills/execute-task/SKILL.md",
+            ROOT / ".agents/skills/review/SKILL.md",
+        ],
+        "review": [
+            ROOT / "AGENTS.md",
+            ROOT / ".agents/skills/agent-governance/SKILL.md",
+            ROOT / ".agents/skills/review/SKILL.md",
+        ],
+        "bugfix (Go)": [
+            ROOT / "AGENTS.md",
+            ROOT / ".agents/skills/agent-governance/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/references/architecture.md",
+            ROOT / ".agents/skills/bugfix/SKILL.md",
+        ],
+        "refactor (Go)": [
+            ROOT / "AGENTS.md",
+            ROOT / ".agents/skills/agent-governance/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/SKILL.md",
+            ROOT / ".agents/skills/go-implementation/references/architecture.md",
+            ROOT / ".agents/skills/refactor/SKILL.md",
+            ROOT / ".agents/skills/review/SKILL.md",
+        ],
+    }
+    result: dict[str, dict[str, int | list[str]]] = {}
+    for name, files in flows.items():
+        existing = [f for f in files if f.exists()]
+        total_tokens = sum(int(file_metrics(f)["tokens_est"]) for f in existing)
+        result[name] = {
+            "files": [str(f.relative_to(ROOT)) for f in existing],
+            "tokens_est": total_tokens,
+        }
+    return result
+
+
 def codex_skills() -> list[str]:
     skills: list[str] = []
     config_path = ROOT / ".codex/config.toml"
@@ -87,6 +147,7 @@ def gather_metrics() -> dict[str, object]:
 
     return {
         "baselines": baseline_metrics(),
+        "flows": flow_metrics(),
         "skills": [file_metrics(path) for path in skill_files],
         "references": [file_metrics(path) for path in reference_files],
         "wrappers": [file_metrics(path) for path in wrapper_files],
@@ -105,6 +166,16 @@ def render_table(metrics: dict[str, object]) -> str:
         assert isinstance(payload, dict)
         lines.append(
             f"- {stack}: words={payload['words']} chars={payload['chars']} est_tokens={payload['tokens_est']}"
+        )
+
+    lines.append("")
+    lines.append("Flows:")
+    flows = metrics["flows"]
+    assert isinstance(flows, dict)
+    for flow_name, payload in flows.items():
+        assert isinstance(payload, dict)
+        lines.append(
+            f"- {flow_name}: est_tokens={payload['tokens_est']}"
         )
 
     lines.append("")

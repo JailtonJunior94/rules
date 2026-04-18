@@ -1,6 +1,7 @@
 ---
 name: execute-task
 version: 1.0.0
+depends_on: [review]
 description: Executa uma tarefa de implementação aprovada por meio de codificação, validação, revisão e captura de evidências. Use quando um arquivo de tarefa estiver pronto para implementação e fechamento com testes, lint e evidência de revisão. Não use para planejamento, refatorações amplas sem tarefa ou exploração especulativa de código.
 ---
 
@@ -57,3 +58,4 @@ description: Executa uma tarefa de implementação aprovada por meio de codifica
 * Se o arquivo de tarefa estiver desatualizado em relação ao codebase ou à especificação técnica, parar e expor o descompasso antes de editar código.
 * Se a automação do repositório não tiver entrypoints `task` ou `make`, descobrir e usar os comandos locais documentados em vez de adivinhar.
 * Se as validações falharem, tentar apenas uma remediação limitada. Se a falha apontar para um problema de desenho mais profundo, parar e retornar `failed` com o comando bloqueante exato e um diagnóstico curto.
+* Respeitar o limite de profundidade de invocação definido em `.agents/skills/agent-governance/SKILL.md`. Se review invocar bugfix e bugfix precisar de nova review, esta é a profundidade máxima — não re-invocar bugfix a partir dessa segunda review.

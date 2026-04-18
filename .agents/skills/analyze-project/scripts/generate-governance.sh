@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
+# Gera governanca contextual (AGENTS.md, CLAUDE.md, GEMINI.md, etc.) para um projeto alvo.
+# Uso: bash generate-governance.sh [--dry-run] [diretorio-alvo]
+# --dry-run: mostra o que seria gerado sem escrever arquivos.
 
 set -euo pipefail
+
+DRY_RUN="${DRY_RUN:-0}"
+
+while [[ "${1:-}" == --* ]]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1; shift ;;
+    *) break ;;
+  esac
+done
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -380,33 +392,61 @@ build_validation_commands() {
 
   if [[ -n "$toolchain_json" ]]; then
     local detected_lines=()
-    local detected_output=""
 
-    detected_output="$(TOOLCHAIN_JSON="$toolchain_json" python3 - <<'PY'
-import json
-import os
-
+    # Parse toolchain JSON using python3 when available, otherwise pure bash.
+    _parse_toolchain_python() {
+      TOOLCHAIN_JSON="$toolchain_json" python3 - <<'PY'
+import json, os
 payload = json.loads(os.environ["TOOLCHAIN_JSON"])
 labels = {"go": "Go", "node": "Node", "python": "Python"}
-order = ["go", "node", "python"]
-
-for key in order:
+for key in ["go", "node", "python"]:
     data = payload.get(key)
     if not isinstance(data, dict):
         continue
     cmds = []
-    if data.get("fmt"):
-        cmds.append(f"fmt: `{data['fmt']}`")
-    if data.get("test"):
-        cmds.append(f"test: `{data['test']}`")
-    if data.get("lint"):
-        cmds.append(f"lint: `{data['lint']}`")
+    if data.get("fmt"):   cmds.append(f"fmt: `{data['fmt']}`")
+    if data.get("test"):  cmds.append(f"test: `{data['test']}`")
+    if data.get("lint"):  cmds.append(f"lint: `{data['lint']}`")
     if cmds:
         print(f"Comandos detectados no projeto ({labels[key]}):")
-        for index, cmd in enumerate(cmds, start=1):
-            print(f"{index}. Rodar {cmd}.")
+        for i, cmd in enumerate(cmds, 1): print(f"{i}. Rodar {cmd}.")
 PY
-)"
+    }
+
+    # Pure-bash fallback: extract values from simple JSON like {"go":{"fmt":"...","test":"...","lint":"..."}}
+    _parse_toolchain_bash() {
+      local lang label fmt_val test_val lint_val
+      for lang in go node python; do
+        case "$lang" in
+          go) label="Go" ;; node) label="Node" ;; python) label="Python" ;;
+        esac
+        # Check if language key exists in JSON
+        echo "$toolchain_json" | grep -q "\"$lang\"" || continue
+        # Extract block for this language (simple single-level parsing)
+        local block
+        block="$(printf '%s' "$toolchain_json" | sed "s/.*\"$lang\":{//" | sed 's/}.*//')"
+        [[ -n "$block" ]] || continue
+        # Extract individual values (handles both "value" and null)
+        fmt_val="$(printf '%s' "$block" | grep -o '"fmt":"[^"]*"' | sed 's/"fmt":"//;s/"//' || true)"
+        test_val="$(printf '%s' "$block" | grep -o '"test":"[^"]*"' | sed 's/"test":"//;s/"//' || true)"
+        lint_val="$(printf '%s' "$block" | grep -o '"lint":"[^"]*"' | sed 's/"lint":"//;s/"//' || true)"
+        local cmds=() idx=1
+        [[ -n "$fmt_val" ]]  && cmds+=("$idx. Rodar fmt: \`$fmt_val\`.") && idx=$((idx + 1))
+        [[ -n "$test_val" ]] && cmds+=("$idx. Rodar test: \`$test_val\`.") && idx=$((idx + 1))
+        [[ -n "$lint_val" ]] && cmds+=("$idx. Rodar lint: \`$lint_val\`.")
+        if [[ ${#cmds[@]} -gt 0 ]]; then
+          printf 'Comandos detectados no projeto (%s):\n' "$label"
+          printf '%s\n' "${cmds[@]}"
+        fi
+      done
+    }
+
+    local detected_output=""
+    if command -v python3 >/dev/null 2>&1; then
+      detected_output="$(_parse_toolchain_python 2>/dev/null || _parse_toolchain_bash)"
+    else
+      detected_output="$(_parse_toolchain_bash)"
+    fi
 
     while IFS= read -r line; do
       [[ -n "$line" ]] || continue
@@ -511,21 +551,26 @@ render_template() {
     shift 2
   done
 
-  # Captura em variavel para preservar comportamento de trim de trailing newlines
+  # Captura em variavel para preservar comportamento de trim de trailing newlines.
+  # Usa index/substr para substituicao literal (sem regex, sem tratamento de & ou \).
   local content
   content="$(env "${env_args[@]}" RENDER_COUNT="$pair_count" awk '
     BEGIN {
       n = ENVIRON["RENDER_COUNT"] + 0
       for (i = 0; i < n; i++) {
         keys[i] = ENVIRON["RENDER_K_" i]
-        v = ENVIRON["RENDER_V_" i]
-        gsub(/&/, "\\\\&", v)
-        vals[i] = v
+        vals[i] = ENVIRON["RENDER_V_" i]
       }
     }
     {
       for (i = 0; i < n; i++) {
-        gsub(keys[i], vals[i])
+        result = ""
+        rest = $0
+        while ((pos = index(rest, keys[i])) > 0) {
+          result = result substr(rest, 1, pos - 1) vals[i]
+          rest = substr(rest, pos + length(keys[i]))
+        }
+        $0 = result rest
       }
       print
     }
@@ -548,8 +593,21 @@ VALIDATION_COMMANDS="$(build_validation_commands)"
 ARCHITECTURE_RESTRICTIONS="$(build_architecture_restrictions "$ARCHITECTURE_TYPE")"
 STACK_SECTION="$(build_stack_section)"
 
-render_template \
+# GOVERNANCE_PROFILE: compact strips verbose sections for smaller context windows (Haiku, Codex).
+# Default: standard (full output). Auto-detect compact when only Codex is installed.
+if [[ -z "${GOVERNANCE_PROFILE:-}" ]]; then
+  if [[ "${INSTALL_CODEX:-0}" == "1" && "${INSTALL_CLAUDE:-0}" == "0" && "${INSTALL_GEMINI:-0}" == "0" && "${INSTALL_COPILOT:-0}" == "0" ]]; then
+    GOVERNANCE_PROFILE="compact"
+  else
+    GOVERNANCE_PROFILE="standard"
+  fi
+fi
+
+GOVERNANCE_SCHEMA_VERSION="1.0.0"
+
+_agents_content="$(render_template \
   "$SKILL_DIR/assets/agents-template.md" \
+  "GOVERNANCE_SCHEMA_VERSION" "$GOVERNANCE_SCHEMA_VERSION" \
   "TIPO_ARQUITETURA" "$ARCHITECTURE_TYPE" \
   "DESCRICAO_ARQUITETURA" "$ARCHITECTURE_DESCRIPTION" \
   "ARVORE_DIRETORIOS" "$DIRECTORY_TREE" \
@@ -559,48 +617,88 @@ render_template \
   "REGRAS_LINGUAGEM" "$LANGUAGE_RULES" \
   "REFERENCIAS_LINGUAGEM" "$LANGUAGE_REFERENCES" \
   "COMANDOS_VALIDACAO" "$VALIDATION_COMMANDS" \
-  "RESTRICOES_ARQUITETURA" "$ARCHITECTURE_RESTRICTIONS" \
-  > "$PROJECT_DIR/AGENTS.md"
+  "RESTRICOES_ARQUITETURA" "$ARCHITECTURE_RESTRICTIONS")"
 
-AI_TOOL_TEMPLATE="$SKILL_DIR/assets/ai-tool-template.md"
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "[dry-run] Geraria AGENTS.md (schema $GOVERNANCE_SCHEMA_VERSION, profile $GOVERNANCE_PROFILE)"
+  [[ "$INSTALL_CLAUDE" == "1" ]]  && echo "[dry-run] Geraria CLAUDE.md"
+  [[ "$INSTALL_GEMINI" == "1" ]]  && echo "[dry-run] Geraria GEMINI.md"
+  [[ "$INSTALL_CODEX" == "1" ]]   && echo "[dry-run] Geraria .codex/config.toml"
+  [[ "$INSTALL_COPILOT" == "1" ]] && echo "[dry-run] Geraria .github/copilot-instructions.md"
+else
+  printf '%s\n' "$_agents_content" > "$PROJECT_DIR/AGENTS.md"
 
-if [[ "$INSTALL_CLAUDE" == "1" ]]; then
-  render_template "$AI_TOOL_TEMPLATE" \
-    "TOOL_NAME" "Claude Code" \
-    "TOOL_INSTRUCTION" "fonte canonica das regras" \
-    "CONFIG_LINE_2" "\`.claude/skills/\` sao symlinks para \`.agents/skills/\` — a fonte de verdade e sempre \`.agents/skills/\`." \
-    "CONFIG_LINE_3" "\`.claude/agents/\` sao wrappers leves que delegam para a habilidade canonica." \
-    "SECAO_STACK" "$STACK_SECTION" \
-    > "$PROJECT_DIR/CLAUDE.md"
-fi
+  if [[ "$GOVERNANCE_PROFILE" == "compact" ]]; then
+    awk '
+      BEGIN { skip=0 }
+      /^## Diretrizes de Estrutura$/ { skip=1; next }
+      /^### Composicao Multi-Linguagem$/ { skip=1; next }
+      /^## / && skip { skip=0 }
+      skip { next }
+      { print }
+    ' "$PROJECT_DIR/AGENTS.md" > "$PROJECT_DIR/AGENTS.md.tmp" && \
+    mv "$PROJECT_DIR/AGENTS.md.tmp" "$PROJECT_DIR/AGENTS.md"
+  fi
 
-if [[ "$INSTALL_GEMINI" == "1" ]]; then
-  render_template "$AI_TOOL_TEMPLATE" \
-    "TOOL_NAME" "Gemini CLI" \
-    "TOOL_INSTRUCTION" "fonte canonica das regras" \
-    "CONFIG_LINE_2" "\`.agents/skills/\` e a fonte de verdade dos fluxos procedurais." \
-    "CONFIG_LINE_3" "\`.gemini/commands/\` sao adaptadores finos que apontam para a habilidade correta." \
-    "SECAO_STACK" "$STACK_SECTION" \
-    > "$PROJECT_DIR/GEMINI.md"
-fi
+  # Append local extensions if present (never overwritten by upgrade)
+  if [[ -f "$PROJECT_DIR/AGENTS.local.md" ]]; then
+    printf '\n' >> "$PROJECT_DIR/AGENTS.md"
+    cat "$PROJECT_DIR/AGENTS.local.md" >> "$PROJECT_DIR/AGENTS.md"
+  fi
 
-if [[ "$INSTALL_CODEX" == "1" ]]; then
-  mkdir -p "$PROJECT_DIR/.codex"
-  _codex_go=0; _codex_node=0; _codex_python=0
-  should_include_go && _codex_go=1
-  should_include_node && _codex_node=1
-  should_include_python && _codex_python=1
-  build_codex_config "$_codex_go" "$_codex_node" "$_codex_python" > "$PROJECT_DIR/.codex/config.toml"
-fi
+  AI_TOOL_TEMPLATE="$SKILL_DIR/assets/ai-tool-template.md"
 
-if [[ "$INSTALL_COPILOT" == "1" ]]; then
-  render_template "$AI_TOOL_TEMPLATE" \
-    "TOOL_NAME" "GitHub Copilot CLI" \
-    "TOOL_INSTRUCTION" "instrucao principal" \
-    "CONFIG_LINE_2" "\`.agents/skills/\` e a fonte de verdade dos fluxos procedurais." \
-    "CONFIG_LINE_3" "\`.github/agents/\` sao wrappers leves que apontam para a habilidade correta." \
-    "SECAO_STACK" "$STACK_SECTION" \
-    > "$PROJECT_DIR/.github/copilot-instructions.md"
+  if [[ "$INSTALL_CLAUDE" == "1" ]]; then
+    render_template "$AI_TOOL_TEMPLATE" \
+      "TOOL_NAME" "Claude Code" \
+      "TOOL_INSTRUCTION" "fonte canonica das regras" \
+      "CONFIG_LINE_2" "\`.claude/skills/\` sao symlinks para \`.agents/skills/\` — a fonte de verdade e sempre \`.agents/skills/\`." \
+      "CONFIG_LINE_3" "\`.claude/agents/\` sao wrappers leves que delegam para a habilidade canonica." \
+      "SECAO_STACK" "$STACK_SECTION" \
+      > "$PROJECT_DIR/CLAUDE.md"
+  fi
+
+  if [[ "$INSTALL_GEMINI" == "1" ]]; then
+    render_template "$AI_TOOL_TEMPLATE" \
+      "TOOL_NAME" "Gemini CLI" \
+      "TOOL_INSTRUCTION" "fonte canonica das regras" \
+      "CONFIG_LINE_2" "\`.agents/skills/\` e a fonte de verdade dos fluxos procedurais." \
+      "CONFIG_LINE_3" "\`.gemini/commands/\` sao adaptadores finos que apontam para a habilidade correta." \
+      "SECAO_STACK" "$STACK_SECTION" \
+      > "$PROJECT_DIR/GEMINI.md"
+    # Append Gemini-specific guidance (no hooks/agents support)
+    cat >> "$PROJECT_DIR/GEMINI.md" <<'GEMINI_EXTRA'
+
+## Orientacoes Especificas para Gemini
+
+O Gemini CLI nao suporta hooks, agents ou rules nativos. Para modelar o fluxo de governanca:
+
+1. Ao iniciar uma tarefa, ler `AGENTS.md` e `.agents/skills/agent-governance/SKILL.md` como contexto base antes de editar codigo.
+2. Usar `@<command>` para invocar o comando TOML correspondente a skill desejada.
+3. Seguir as etapas procedurais do SKILL.md carregado pelo comando como se fossem instrucoes sequenciais.
+4. Ao final da tarefa, executar os comandos de validacao descritos na secao Validacao do `AGENTS.md`.
+5. Nao confiar em enforcement automatico — a compliance depende de seguir as instrucoes procedurais manualmente.
+GEMINI_EXTRA
+  fi
+
+  if [[ "$INSTALL_CODEX" == "1" ]]; then
+    mkdir -p "$PROJECT_DIR/.codex"
+    _codex_go=0; _codex_node=0; _codex_python=0
+    should_include_go && _codex_go=1
+    should_include_node && _codex_node=1
+    should_include_python && _codex_python=1
+    build_codex_config "$_codex_go" "$_codex_node" "$_codex_python" > "$PROJECT_DIR/.codex/config.toml"
+  fi
+
+  if [[ "$INSTALL_COPILOT" == "1" ]]; then
+    render_template "$AI_TOOL_TEMPLATE" \
+      "TOOL_NAME" "GitHub Copilot CLI" \
+      "TOOL_INSTRUCTION" "instrucao principal" \
+      "CONFIG_LINE_2" "\`.agents/skills/\` e a fonte de verdade dos fluxos procedurais." \
+      "CONFIG_LINE_3" "\`.github/agents/\` sao wrappers leves que apontam para a habilidade correta." \
+      "SECAO_STACK" "$STACK_SECTION" \
+      > "$PROJECT_DIR/.github/copilot-instructions.md"
+  fi
 fi
 
 printf 'Arquitetura detectada: %s\n' "$ARCHITECTURE_TYPE"

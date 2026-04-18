@@ -200,6 +200,41 @@ for skill_dir in "$ROOT_DIR/.agents/skills"/*/; do
 done
 
 # ============================================================
+# Validar depends_on: skills declaradas existem no disco
+# ============================================================
+validate_depends_on() {
+  local skill_name="$1"
+  local skill_file="$ROOT_DIR/.agents/skills/$skill_name/SKILL.md"
+
+  [[ -f "$skill_file" ]] || return 0
+
+  # Extrair campo depends_on do frontmatter (formato: depends_on: [a, b])
+  local deps_line
+  deps_line="$(awk '/^---$/{n++; next} n==1 && /^depends_on:/{print; exit}' "$skill_file")"
+  [[ -n "$deps_line" ]] || return 0
+
+  # Extrair nomes das dependencias
+  local deps
+  deps="$(printf '%s' "$deps_line" | sed 's/depends_on:[[:space:]]*\[//;s/\]//;s/,/ /g;s/ *//g')"
+
+  for dep in $deps; do
+    dep="$(printf '%s' "$dep" | tr -d '[:space:]')"
+    [[ -n "$dep" ]] || continue
+    if [[ -d "$ROOT_DIR/.agents/skills/$dep" ]]; then
+      pass "$skill_name: depends_on '$dep' existe"
+    else
+      fail "$skill_name: depends_on '$dep' NAO encontrada"
+    fi
+  done
+}
+
+for skill_dir in "$ROOT_DIR/.agents/skills"/*/; do
+  [[ -d "$skill_dir" ]] || continue
+  skill_name="$(basename "$skill_dir")"
+  validate_depends_on "$skill_name"
+done
+
+# ============================================================
 # Resumo
 # ============================================================
 echo ""

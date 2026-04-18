@@ -11,6 +11,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 _LIB_DIR="$(cd "$SCRIPT_DIR/../../../../scripts/lib" 2>/dev/null && pwd)" || _LIB_DIR=""
 
+STRICT=0
+while [[ "${1:-}" == --* ]]; do
+  case "$1" in
+    --strict) STRICT=1; shift ;;
+    *) break ;;
+  esac
+done
+
 PROJECT_DIR="${1:-.}"
 FOCUS_PATHS="${DETECT_TOOLCHAIN_FOCUS_PATHS:-${2:-}}"
 MAX_DEPTH="${DETECT_TOOLCHAIN_MAX_DEPTH:-4}"
@@ -91,8 +99,10 @@ PY
     return
   fi
 
-  # Fallback: grep for the target name inside optional-dependencies sections
-  grep -qi "\"${target}[\"<>=!~ []" "$manifest" 2>/dev/null
+  # Fallback: grep for the target name in dependencies and optional-dependencies sections.
+  # Use -A50 to capture multi-line dependency lists after the section header.
+  grep -A50 '^\[project\.\(optional-\)\{0,1\}dependencies' "$manifest" 2>/dev/null \
+    | grep -qi "\"${target}[\"<>=!~ [,]" 2>/dev/null
 }
 
 package_scripts_bash() {
@@ -391,6 +401,24 @@ if [[ ${#entries[@]} -eq 0 ]]; then
   fi
 
   entries+=("$(json_entry "unknown" "$fallback_fmt" "$fallback_test" "$fallback_lint")")
+fi
+
+# --strict: warn about missing binaries on stderr (does not affect JSON output)
+if [[ "$STRICT" -eq 1 ]]; then
+  _warn_missing() {
+    local cmd="$1" label="$2"
+    local binary="${cmd%% *}"
+    [[ -z "$binary" ]] && return
+    if ! command -v "$binary" >/dev/null 2>&1; then
+      echo "AVISO: $label '$binary' nao encontrado no PATH" >&2
+    fi
+  }
+  [[ -n "${go_fmt:-}" ]]   && _warn_missing "$go_fmt" "go/fmt"
+  [[ -n "${go_lint:-}" ]]  && _warn_missing "$go_lint" "go/lint"
+  [[ -n "${node_fmt:-}" ]] && _warn_missing "$node_fmt" "node/fmt"
+  [[ -n "${node_lint:-}" ]] && _warn_missing "$node_lint" "node/lint"
+  [[ -n "${py_fmt:-}" ]]   && _warn_missing "$py_fmt" "python/fmt"
+  [[ -n "${py_lint:-}" ]]  && _warn_missing "$py_lint" "python/lint"
 fi
 
 printf '{'

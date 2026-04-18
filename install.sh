@@ -193,9 +193,36 @@ if [[ $INSTALL_CLAUDE -eq 1 ]]; then
   done
   safe_cp "$RULES_DIR/.claude/rules/governance.md" "$PROJECT_DIR/.claude/rules/governance.md"
   safe_cp "$RULES_DIR/.claude/scripts/validate-task-evidence.sh" "$PROJECT_DIR/.claude/scripts/"
+  safe_mkdir "$PROJECT_DIR/.claude/hooks"
+  safe_cp "$RULES_DIR/.claude/hooks/validate-governance.sh" "$PROJECT_DIR/.claude/hooks/"
+  # Auto-configure hook in settings.local.json if not already present
+  _settings_file="$PROJECT_DIR/.claude/settings.local.json"
   if [[ "$DRY_RUN" -eq 1 ]]; then
+    dry_log "configurar hook PostToolUse em $_settings_file"
     dry_log "gerar .claude/agents/*.md via generate-adapters.sh"
   else
+    if [[ ! -f "$_settings_file" ]]; then
+      cat > "$_settings_file" <<'SETTINGS'
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-governance.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+SETTINGS
+    elif ! grep -q 'validate-governance' "$_settings_file" 2>/dev/null; then
+      echo "AVISO: .claude/settings.local.json ja existe. Adicione o hook manualmente:"
+      echo '  "hooks": { "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash .claude/hooks/validate-governance.sh" }] }] }'
+    fi
     bash "$RULES_DIR/scripts/generate-adapters.sh" "$PROJECT_DIR" 2>/dev/null || \
       safe_cp "$RULES_DIR/.claude/agents/"*.md "$PROJECT_DIR/.claude/agents/"
   fi
