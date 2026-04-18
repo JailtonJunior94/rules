@@ -159,6 +159,33 @@ else
 fi
 
 # ============================================================
+# Caso 10: Codex config regenerado durante upgrade
+# ============================================================
+CODEX_PROJECT="$TMP_DIR/codex-project"
+mkdir -p "$CODEX_PROJECT"
+echo "module codex-test" > "$CODEX_PROJECT/go.mod"
+
+LINK_MODE=copy bash "$INSTALL_SCRIPT" --tools codex --langs go "$CODEX_PROJECT" > /dev/null 2>&1
+
+# Corromper o config do Codex e forcar divergencia em uma skill
+echo "# stale config" > "$CODEX_PROJECT/.codex/config.toml"
+echo "# modificado" >> "$CODEX_PROJECT/.agents/skills/agent-governance/SKILL.md"
+
+bash "$UPGRADE_SCRIPT" "$CODEX_PROJECT" > /dev/null 2>&1
+
+if grep -q '".agents/skills/go-implementation"' "$CODEX_PROJECT/.codex/config.toml"; then
+  pass "codex-upgrade: config regenerado com skill Go"
+else
+  fail "codex-upgrade: config nao regenerado"
+fi
+
+if grep -q '# stale config' "$CODEX_PROJECT/.codex/config.toml"; then
+  fail "codex-upgrade: config antigo nao substituido"
+else
+  pass "codex-upgrade: config antigo substituido"
+fi
+
+# ============================================================
 # Resumo
 # ============================================================
 echo ""

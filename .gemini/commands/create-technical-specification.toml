@@ -1,11 +1,11 @@
-description = "Redige ou atualiza uma especificação técnica usando a habilidade canônica create-technical-specification."
+description = "Cria especificações técnicas prontas para implementação a partir de um PRD aprovado e do contexto do repositório."
 prompt = """
-Use `.agents/skills/create-technical-specification/SKILL.md` como fluxo canônico desta tarefa.
+Use `.agents/skills/create-technical-specification/SKILL.md` como fluxo canonico desta tarefa.
 Leia os assets referenciados sob demanda, especialmente:
-- `.agents/skills/create-technical-specification/assets/techspec-template.md`
 - `.agents/skills/create-technical-specification/assets/adr-template.md`
-Não invente um processo paralelo neste comando.
+- `.agents/skills/create-technical-specification/assets/techspec-template.md`
+Nao invente um processo paralelo neste comando.
 
-Aplicar a habilidade a esta solicitação:
+Aplicar a habilidade a esta solicitacao:
 {{args}}
 """

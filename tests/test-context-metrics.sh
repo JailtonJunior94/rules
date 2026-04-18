@@ -104,6 +104,25 @@ else
   pass "codex-regression: planning skill ausente do perfil enxuto"
 fi
 
+# Gate: nenhuma referencia individual pode exceder 1500 palavras
+ref_over_budget="$(METRICS_JSON="$metrics_json" python3 - <<'PY'
+import json
+import os
+
+payload = json.loads(os.environ["METRICS_JSON"])
+over = [item for item in payload["references"] if item["words"] > 1500]
+for item in over:
+    print(f"  {item['path']}: {item['words']} palavras")
+PY
+)"
+
+if [[ -z "$ref_over_budget" ]]; then
+  pass "reference-budget: todas as referencias <= 1500 palavras"
+else
+  fail "reference-budget: referencias acima do limite"
+  echo "$ref_over_budget"
+fi
+
 echo ""
 echo "Resultado: $PASSED passed, $FAILED failed"
 

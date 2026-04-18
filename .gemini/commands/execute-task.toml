@@ -1,10 +1,10 @@
-description = "Executa uma tarefa aprovada usando a habilidade canônica execute-task."
+description = "Executa uma tarefa de implementação aprovada por meio de codificação, validação, revisão e captura de evidências"
 prompt = """
-Use `.agents/skills/execute-task/SKILL.md` como fluxo canônico desta tarefa.
+Use `.agents/skills/execute-task/SKILL.md` como fluxo canonico desta tarefa.
 Leia os assets referenciados sob demanda, especialmente `.agents/skills/execute-task/assets/task-execution-report-template.md`.
-Se revisão for necessária, use `.agents/skills/review/SKILL.md` como processo de revisão.
-Não invente um processo paralelo neste comando.
+Se revisao for necessaria, use `.agents/skills/review/SKILL.md` como processo de revisao.
+Nao invente um processo paralelo neste comando.
 
-Aplicar a habilidade a esta solicitação:
+Aplicar a habilidade a esta solicitacao:
 {{args}}
 """

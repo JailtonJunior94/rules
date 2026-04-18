@@ -255,6 +255,29 @@ else
   fail "detect-toolchain: projeto vazio falhou"
 fi
 
+# Caso: package.json com nome contendo aspas (json_escape edge case)
+mkdir -p "$TMP_DIR/quote-project"
+cat > "$TMP_DIR/quote-project/package.json" <<'QEOF'
+{
+  "name": "@scope/my\"pkg",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint ."
+  }
+}
+QEOF
+
+if output="$(bash "$DETECT_TOOLCHAIN" "$TMP_DIR/quote-project" 2>/dev/null)"; then
+  # Validar que o JSON e sintaticamente valido
+  if python3 -c "import json, sys; json.loads(sys.argv[1])" "$output" 2>/dev/null; then
+    pass "detect-toolchain: JSON valido com aspas no nome do package"
+  else
+    fail "detect-toolchain: JSON invalido com aspas no nome do package: $output"
+  fi
+else
+  fail "detect-toolchain: falhou com aspas no nome do package"
+fi
+
 # ============================================================
 # validate-task-evidence.sh
 # ============================================================

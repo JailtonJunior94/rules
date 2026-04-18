@@ -1,11 +1,11 @@
-description = "Gera tarefas de implementação usando a habilidade canônica create-tasks."
+description = "Cria tarefas incrementais de implementação a partir de um PRD e de uma especificação técnica."
 prompt = """
-Use `.agents/skills/create-tasks/SKILL.md` como fluxo canônico desta tarefa.
+Use `.agents/skills/create-tasks/SKILL.md` como fluxo canonico desta tarefa.
 Leia os assets referenciados sob demanda, especialmente:
-- `.agents/skills/create-tasks/assets/tasks-template.md`
 - `.agents/skills/create-tasks/assets/task-template.md`
-Não invente um processo paralelo neste comando.
+- `.agents/skills/create-tasks/assets/tasks-template.md`
+Nao invente um processo paralelo neste comando.
 
-Aplicar a habilidade a esta solicitação:
+Aplicar a habilidade a esta solicitacao:
 {{args}}
 """

@@ -23,6 +23,12 @@ jobs:
       - name: Run script tests
         run: bash tests/test-scripts.sh
 
+      - name: Run skill references tests
+        run: bash tests/test-skill-references.sh
+
+      - name: Run context metrics tests
+        run: bash tests/test-context-metrics.sh
+
       - name: Run adapter parity tests
         run: bash tests/test-adapter-parity.sh
 

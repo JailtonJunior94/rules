@@ -110,6 +110,13 @@ safe_ln() {
   ln -sfn "$1" "$2"
 }
 
+# Calcula caminho relativo de $2 (diretorio) para $1 (alvo).
+# Ambos devem ser caminhos absolutos. Resultado e o link relativo
+# que, criado dentro de $2, aponta para $1.
+compute_relpath() {
+  python3 -c "import os.path, sys; print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath(sys.argv[2])))" "$1" "$2"
+}
+
 link_or_copy_dir() {
   local source="$1"
   local destination="$2"
@@ -286,7 +293,8 @@ echo ""
 # Base comum (AGENTS.md + skills canonicas selecionadas)
 safe_mkdir "$PROJECT_DIR/.agents/skills"
 for skill in "${SKILLS[@]}"; do
-  link_or_copy_skill "$RULES_DIR/.agents/skills/$skill" "$RULES_DIR/.agents/skills/$skill" "$PROJECT_DIR/.agents/skills/$skill"
+  _rel_target="$(compute_relpath "$RULES_DIR/.agents/skills/$skill" "$PROJECT_DIR/.agents/skills")"
+  link_or_copy_skill "$RULES_DIR/.agents/skills/$skill" "$_rel_target" "$PROJECT_DIR/.agents/skills/$skill"
 done
 
 # Claude Code
@@ -308,7 +316,11 @@ fi
 if [[ $INSTALL_GEMINI -eq 1 ]]; then
   echo "-> Instalando Gemini CLI..."
   safe_mkdir "$PROJECT_DIR/.gemini/commands"
-  safe_cp "$RULES_DIR/.gemini/commands/"*.toml "$PROJECT_DIR/.gemini/commands/"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    dry_log "gerar .gemini/commands/*.toml via generate-gemini-commands.sh"
+  else
+    bash "$RULES_DIR/scripts/generate-gemini-commands.sh" "$PROJECT_DIR"
+  fi
 fi
 
 # Codex

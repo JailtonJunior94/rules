@@ -1,7 +1,9 @@
-description = "Analisa o projeto e gera arquivos de governanca personalizados para trabalho com IA."
+description = "Analisa a arquitetura de um projeto (monolito, monolito modular, monorepo, microservico), detecta stack e ferramentas de"
 prompt = """
 Use `.agents/skills/analyze-project/SKILL.md` como fluxo canonico desta tarefa.
-Leia os assets referenciados sob demanda em `.agents/skills/analyze-project/assets/`.
+Leia os assets referenciados sob demanda, especialmente:
+- `.agents/skills/analyze-project/assets/agents-template.md`
+- `.agents/skills/analyze-project/assets/ai-tool-template.md`
 Nao invente um processo paralelo neste comando.
 
 Aplicar a habilidade a esta solicitacao:

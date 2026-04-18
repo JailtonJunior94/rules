@@ -8,6 +8,8 @@ ROOT_DIR="$(cd "$SKILL_DIR/../../.." && pwd)"
 
 # shellcheck source=../../../../scripts/lib/codex-config.sh
 source "$ROOT_DIR/scripts/lib/codex-config.sh"
+# shellcheck source=../../../../scripts/lib/find-manifests.sh
+source "$ROOT_DIR/scripts/lib/find-manifests.sh"
 
 PROJECT_DIR="${1:-.}"
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
@@ -39,21 +41,11 @@ file_exists() {
 }
 
 find_manifests() {
-  local pattern="$1"
-  local maxdepth="${2:-4}"
-
-  find "$PROJECT_DIR" -maxdepth "$maxdepth" -type f -name "$pattern" \
-    -not -path "*/node_modules/*" \
-    -not -path "*/vendor/*" \
-    -not -path "*/dist/*" \
-    -not -path "*/build/*" \
-    -not -path "*/__pycache__/*" \
-    | LC_ALL=C sort
+  lib_find_manifests "$PROJECT_DIR" "$1" "${2:-4}"
 }
 
 has_manifest() {
-  local pattern="$1"
-  find_manifests "$pattern" 4 | read -r _
+  find_manifests "$1" 4 | read -r _
 }
 
 has_any_files() {
@@ -164,8 +156,9 @@ detect_frameworks() {
     return
   fi
 
+  # Deduplica e junta com ", " usando apenas awk (sem dependencia de python3)
   local joined
-  joined="$(printf '%s\n' "${frameworks[@]}" | awk '!seen[$0]++' | python3 -c 'import sys; print(", ".join(line.strip() for line in sys.stdin if line.strip()))')"
+  joined="$(printf '%s\n' "${frameworks[@]}" | awk '!seen[$0]++ { lines[++n]=$0 } END { for(i=1;i<=n;i++) { if(i>1) printf ", "; printf "%s", lines[i] } }')"
   printf '%s' "$joined"
 }
 
@@ -508,22 +501,35 @@ render_template() {
   local template_path="$1"
   shift
 
-  local content
-  content="$(cat "$template_path")"
-
+  # Coleta todos os pares key=value em variaveis de ambiente indexadas
+  # e aplica todas as substituicoes em uma unica passagem de awk.
+  local env_args=()
+  local pair_count=0
   while [[ $# -gt 1 ]]; do
-    local key="$1"
-    local value="$2"
+    env_args+=("RENDER_K_${pair_count}={{$1}}" "RENDER_V_${pair_count}=$2")
+    pair_count=$((pair_count + 1))
     shift 2
-    content="$(RENDER_KEY="{{$key}}" RENDER_VAL="$value" awk '
-      BEGIN {
-        k = ENVIRON["RENDER_KEY"];
-        v = ENVIRON["RENDER_VAL"];
-        gsub(/&/, "\\\\&", v);
-      }
-      { gsub(k, v); print }
-    ' <<< "$content")"
   done
+
+  # Captura em variavel para preservar comportamento de trim de trailing newlines
+  local content
+  content="$(env "${env_args[@]}" RENDER_COUNT="$pair_count" awk '
+    BEGIN {
+      n = ENVIRON["RENDER_COUNT"] + 0
+      for (i = 0; i < n; i++) {
+        keys[i] = ENVIRON["RENDER_K_" i]
+        v = ENVIRON["RENDER_V_" i]
+        gsub(/&/, "\\\\&", v)
+        vals[i] = v
+      }
+    }
+    {
+      for (i = 0; i < n; i++) {
+        gsub(keys[i], vals[i])
+      }
+      print
+    }
+  ' "$template_path")"
 
   printf '%s\n' "$content"
 }

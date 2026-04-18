@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Verifica ou atualiza skills de governanca em um projeto alvo.
 # Uso:
-#   bash upgrade.sh [diretorio-alvo]            # atualiza (copia) skills desatualizadas
-#   bash upgrade.sh --check [diretorio-alvo]     # apenas verifica, sem alterar arquivos
+#   bash upgrade.sh [diretorio-alvo]                        # atualiza todas as skills desatualizadas
+#   bash upgrade.sh --check [diretorio-alvo]                 # apenas verifica, sem alterar arquivos
+#   bash upgrade.sh --langs go,node [diretorio-alvo]         # atualiza apenas skills das linguagens indicadas
+#   bash upgrade.sh --check --langs python [diretorio-alvo]  # verifica apenas skills de Python
 #
 # Compara a versao no frontmatter de cada SKILL.md do repositorio fonte
 # com a versao instalada no projeto alvo.
@@ -11,11 +13,60 @@ set -euo pipefail
 
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# shellcheck source=scripts/lib/codex-config.sh
+source "$SOURCE_DIR/scripts/lib/codex-config.sh"
+
 CHECK_ONLY=0
-if [[ "${1:-}" == "--check" ]]; then
-  CHECK_ONLY=1
-  shift
+LANGS_FILTER=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check)
+      CHECK_ONLY=1
+      shift
+      ;;
+    --langs)
+      LANGS_FILTER="$2"
+      shift 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+# Mapeia --langs para lista de skills filtradas
+LANG_SKILL_NAMES=()
+if [[ -n "$LANGS_FILTER" ]]; then
+  IFS=',' read -ra lang_items <<< "$LANGS_FILTER"
+  for lang in "${lang_items[@]}"; do
+    case "$lang" in
+      go)     LANG_SKILL_NAMES+=(go-implementation object-calisthenics-go) ;;
+      node)   LANG_SKILL_NAMES+=(node-implementation) ;;
+      python) LANG_SKILL_NAMES+=(python-implementation) ;;
+      *) echo "AVISO: linguagem '$lang' ignorada (invalida)." ;;
+    esac
+  done
 fi
+
+should_process_skill() {
+  local skill_name="$1"
+  # Se nenhum filtro, processar todas
+  if [[ -z "$LANGS_FILTER" ]]; then
+    return 0
+  fi
+  # Skills de linguagem: apenas as filtradas
+  case "$skill_name" in
+    go-implementation|object-calisthenics-go|node-implementation|python-implementation)
+      for allowed in "${LANG_SKILL_NAMES[@]}"; do
+        [[ "$skill_name" == "$allowed" ]] && return 0
+      done
+      return 1
+      ;;
+  esac
+  # Skills processuais: sempre incluir
+  return 0
+}
 
 PROJECT_DIR="${1:-.}"
 
@@ -81,6 +132,19 @@ semver_gt() {
 OUTDATED=0
 UP_TO_DATE=0
 MISSING=0
+REFS_DIVERGENT=0
+
+# Computa hash agregado de todos os arquivos em references/ de uma skill.
+# Usa apenas nomes relativos + conteudo para ser independente de caminho absoluto/symlinks.
+# Retorna string vazia se o diretorio nao existir.
+refs_hash() {
+  local refs_dir="$1"
+  if [[ ! -d "$refs_dir" ]]; then
+    printf ''
+    return
+  fi
+  (cd "$refs_dir" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}')
+}
 
 echo "Verificando skills em: $PROJECT_DIR"
 echo "Fonte: $SOURCE_DIR"
@@ -88,6 +152,12 @@ echo ""
 
 for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
   skill_name="$(basename "$(dirname "$source_skill")")"
+
+  # Aplicar filtro de linguagem quando --langs foi informado
+  if ! should_process_skill "$skill_name"; then
+    continue
+  fi
+
   target_skill="$PROJECT_DIR/.agents/skills/$skill_name/SKILL.md"
 
   source_version="$(extract_version "$source_skill")"
@@ -117,9 +187,18 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
       echo "  CONTEUDO DIVERGENTE  $skill_name ($target_version, checksum diferente)"
       OUTDATED=$((OUTDATED + 1))
     else
-      echo "  OK  $skill_name ($target_version)"
-      UP_TO_DATE=$((UP_TO_DATE + 1))
-      continue
+      # SKILL.md identico — verificar tambem references/
+      source_refs_hash="$(refs_hash "$SOURCE_DIR/.agents/skills/$skill_name/references")"
+      target_refs_hash="$(refs_hash "$PROJECT_DIR/.agents/skills/$skill_name/references")"
+      if [[ -n "$source_refs_hash" && "$source_refs_hash" != "$target_refs_hash" ]]; then
+        echo "  REFS DIVERGENTES  $skill_name ($target_version, references/ checksum diferente)"
+        REFS_DIVERGENT=$((REFS_DIVERGENT + 1))
+        OUTDATED=$((OUTDATED + 1))
+      else
+        echo "  OK  $skill_name ($target_version)"
+        UP_TO_DATE=$((UP_TO_DATE + 1))
+        continue
+      fi
     fi
   fi
 
@@ -136,7 +215,7 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
 done
 
 echo ""
-echo "Resumo: $UP_TO_DATE atualizadas, $OUTDATED desatualizadas, $MISSING ausentes"
+echo "Resumo: $UP_TO_DATE atualizadas, $OUTDATED desatualizadas ($REFS_DIVERGENT refs divergentes), $MISSING ausentes"
 
 if [[ "$CHECK_ONLY" -eq 1 && $((OUTDATED + MISSING)) -gt 0 ]]; then
   echo ""
@@ -187,17 +266,26 @@ if [[ "$CHECK_ONLY" -eq 0 && "$OUTDATED" -gt 0 ]]; then
     done
   fi
 
-  # Gemini commands
-  if [[ -d "$PROJECT_DIR/.gemini/commands" && -d "$SOURCE_DIR/.gemini/commands" ]]; then
-    for cmd_file in "$SOURCE_DIR/.gemini/commands/"*.toml; do
-      [[ -f "$cmd_file" ]] || continue
-      local_name="$(basename "$cmd_file")"
-      target_file="$PROJECT_DIR/.gemini/commands/$local_name"
-      if [[ ! -f "$target_file" ]] || ! diff -q "$cmd_file" "$target_file" > /dev/null 2>&1; then
-        cp "$cmd_file" "$target_file"
-        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
-      fi
-    done
+  # Gemini commands — re-gerar a partir das skills instaladas
+  if [[ -d "$PROJECT_DIR/.gemini/commands" ]]; then
+    GEMINI_GENERATOR="$SOURCE_DIR/scripts/generate-gemini-commands.sh"
+    if [[ -f "$GEMINI_GENERATOR" ]]; then
+      bash "$GEMINI_GENERATOR" "$PROJECT_DIR" 2>/dev/null && \
+        ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1)) || true
+    fi
+  fi
+
+  # Codex config — re-gerar a partir das skills instaladas
+  if [[ -f "$PROJECT_DIR/.codex/config.toml" ]]; then
+    _codex_go=0; _codex_node=0; _codex_python=0
+    [[ -e "$PROJECT_DIR/.agents/skills/go-implementation/SKILL.md" ]] && _codex_go=1
+    [[ -e "$PROJECT_DIR/.agents/skills/node-implementation/SKILL.md" ]] && _codex_node=1
+    [[ -e "$PROJECT_DIR/.agents/skills/python-implementation/SKILL.md" ]] && _codex_python=1
+    new_codex="$(build_codex_config "$_codex_go" "$_codex_node" "$_codex_python")"
+    if [[ "$(printf '%b' "$new_codex")" != "$(cat "$PROJECT_DIR/.codex/config.toml")" ]]; then
+      printf '%b' "$new_codex" > "$PROJECT_DIR/.codex/config.toml"
+      ADAPTERS_UPDATED=$((ADAPTERS_UPDATED + 1))
+    fi
   fi
 
   # GitHub agents

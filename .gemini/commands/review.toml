@@ -1,8 +1,8 @@
-description = "Revisa um diff usando a habilidade canônica review."
+description = "Revisa um diff de código quanto a correção, segurança, regressões e testes faltantes usando regras específicas do "
 prompt = """
-Use `.agents/skills/review/SKILL.md` como fluxo canônico desta tarefa.
-Não invente um processo paralelo neste comando.
+Use `.agents/skills/review/SKILL.md` como fluxo canonico desta tarefa.
+Nao invente um processo paralelo neste comando.
 
-Aplicar a habilidade a esta solicitação:
+Aplicar a habilidade a esta solicitacao:
 {{args}}
 """

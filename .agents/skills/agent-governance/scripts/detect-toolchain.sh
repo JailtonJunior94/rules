@@ -8,6 +8,9 @@
 # Saida: JSON com chave por linguagem detectada, cada uma com fmt, test, lint.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+_LIB_DIR="$(cd "$SCRIPT_DIR/../../../../scripts/lib" 2>/dev/null && pwd)" || _LIB_DIR=""
+
 PROJECT_DIR="${1:-.}"
 FOCUS_PATHS="${DETECT_TOOLCHAIN_FOCUS_PATHS:-${2:-}}"
 MAX_DEPTH="${DETECT_TOOLCHAIN_MAX_DEPTH:-4}"
@@ -19,18 +22,25 @@ fi
 
 cd "$PROJECT_DIR"
 
-find_manifests() {
-  local pattern="$1"
-  local maxdepth="${2:-$MAX_DEPTH}"
-
-  find . -maxdepth "$maxdepth" -type f -name "$pattern" \
-    -not -path "*/node_modules/*" \
-    -not -path "*/vendor/*" \
-    -not -path "*/dist/*" \
-    -not -path "*/build/*" \
-    -not -path "*/__pycache__/*" \
-    | LC_ALL=C sort
-}
+if [[ -n "$_LIB_DIR" && -f "$_LIB_DIR/find-manifests.sh" ]]; then
+  # shellcheck source=../../../../scripts/lib/find-manifests.sh
+  source "$_LIB_DIR/find-manifests.sh"
+  find_manifests() {
+    lib_find_manifests "." "$1" "${2:-$MAX_DEPTH}"
+  }
+else
+  find_manifests() {
+    local pattern="$1"
+    local maxdepth="${2:-$MAX_DEPTH}"
+    find . -maxdepth "$maxdepth" -type f -name "$pattern" \
+      -not -path "*/node_modules/*" \
+      -not -path "*/vendor/*" \
+      -not -path "*/dist/*" \
+      -not -path "*/build/*" \
+      -not -path "*/__pycache__/*" \
+      | LC_ALL=C sort
+  }
+fi
 
 json_escape() {
   local value="$1"

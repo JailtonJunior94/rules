@@ -41,12 +41,15 @@ check_file "github-agent/analyze-project" "$ROOT_DIR/.github/agents/project-anal
 check_file "github-agent/bugfix" "$ROOT_DIR/.github/agents/bugfix.agent.md"
 
 echo "=== Gemini commands ==="
-for skill in create-prd create-technical-specification create-tasks execute-task refactor review analyze-project bugfix object-calisthenics-go go-implementation node-implementation python-implementation; do
+# Verifica que cada skill processual + linguagem tem um comando Gemini correspondente.
+# Os .toml sao gerados via generate-gemini-commands.sh — o teste valida o resultado.
+GEMINI_EXPECTED_SKILLS=(create-prd create-technical-specification create-tasks execute-task refactor review analyze-project bugfix object-calisthenics-go go-implementation node-implementation python-implementation)
+for skill in "${GEMINI_EXPECTED_SKILLS[@]}"; do
   check_file "gemini-cmd/$skill" "$ROOT_DIR/.gemini/commands/${skill}.toml"
 done
 
 echo "=== Gemini {{args}} placeholder ==="
-for skill in create-prd create-technical-specification create-tasks execute-task refactor review analyze-project bugfix object-calisthenics-go go-implementation node-implementation python-implementation; do
+for skill in "${GEMINI_EXPECTED_SKILLS[@]}"; do
   toml_path="$ROOT_DIR/.gemini/commands/${skill}.toml"
   if [[ ! -e "$toml_path" ]]; then
     echo "FAIL  gemini-args/$skill -> file missing"
