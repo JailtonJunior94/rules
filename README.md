@@ -4,7 +4,7 @@ Governança reutilizável para agentes de IA em repositórios reais, com uma bas
 
 O repositório existe para evitar duplicação de processo entre Claude Code, Codex, Gemini CLI e GitHub Copilot, mantendo uma única fonte de verdade para regras operacionais, referências e fluxos de trabalho.
 
-> Last reviewed: 2026-04-18
+> Last reviewed: 2026-04-19
 
 ## Para quem é
 
@@ -118,7 +118,7 @@ Esse modo mostra o que seria criado sem alterar arquivos.
 |----------|---------|---------------------------|
 | `LINK_MODE` | `symlink` | usa symlinks para as skills canônicas; com `copy`, instala um snapshot local |
 | `GENERATE_CONTEXTUAL_GOVERNANCE` | `1` | com `1`, gera governança contextual; com `0`, copia os arquivos base sem personalização |
-| `CODEX_SKILL_PROFILE` | `minimal` | controla o conjunto de skills no `.codex/config.toml`; `full` inclui também skills de planejamento |
+| `CODEX_SKILL_PROFILE` | `full` | controla o conjunto de skills no `.codex/config.toml`; `full` inclui skills de planejamento; qualquer outro valor cai no perfil operacional enxuto |
 | `DETECT_TOOLCHAIN_MAX_DEPTH` | `4` | profundidade máxima usada na busca de manifests para detecção de toolchain |
 | `DETECT_TOOLCHAIN_FOCUS_PATHS` | vazio | prioriza paths afetados ao detectar o workspace ou package mais relevante |
 
@@ -133,6 +133,9 @@ LINK_MODE=copy bash install.sh /caminho/do/projeto
 
 # sem geração contextual
 GENERATE_CONTEXTUAL_GOVERNANCE=0 bash install.sh /caminho/do/projeto
+
+# perfil operacional enxuto para Codex
+CODEX_SKILL_PROFILE=lean bash install.sh --tools codex --langs all /caminho/do/projeto
 
 # perfil completo para Codex
 CODEX_SKILL_PROFILE=full bash install.sh --tools codex --langs all /caminho/do/projeto
@@ -160,9 +163,21 @@ Quando `LINK_MODE=copy`, as skills são copiadas para o projeto-alvo. Quando `LI
 
 As skills canônicas vivem em `.agents/skills/`. Adaptadores de ferramenta são somente wrappers finos.
 
-### 2. Perfil enxuto para Codex
+### 2. Perfis do Codex
 
-O perfil padrão do Codex é `minimal`. Pelo código de `scripts/lib/codex-config.sh`, ele habilita:
+Para projetos-alvo instalados com `install.sh`, o default em `scripts/lib/codex-config.sh` é `full`, então o `.codex/config.toml` gerado inclui:
+
+- `agent-governance`
+- `analyze-project`
+- `create-prd`
+- `create-technical-specification`
+- `create-tasks`
+- `execute-task`
+- `refactor`
+- `review`
+- `bugfix`
+
+Quando `CODEX_SKILL_PROFILE` recebe qualquer valor diferente de `full`, o gerador cai no perfil operacional enxuto, que habilita:
 
 - `agent-governance`
 - `execute-task`
@@ -170,7 +185,7 @@ O perfil padrão do Codex é `minimal`. Pelo código de `scripts/lib/codex-confi
 - `review`
 - `bugfix`
 
-As skills de planejamento entram no perfil `full` ou quando o projeto-alvo decide carregá-las sob demanda.
+O arquivo deste próprio repositório em `.codex/config.toml` usa esse perfil enxuto para reduzir contexto local. Em projetos-alvo, as skills de planejamento entram por default com `full` ou podem ser retiradas definindo um perfil enxuto explicitamente.
 
 ### 3. Geração de adaptadores
 
@@ -258,6 +273,9 @@ Os scripts de teste presentes no repositório hoje são:
 
 ```bash
 bash tests/test-generate-governance.sh
+bash tests/test-copilot.sh
+bash tests/test-e2e.sh
+bash tests/test-governance-lint.sh
 bash tests/test-install.sh
 bash tests/test-upgrade.sh
 bash tests/test-scripts.sh
@@ -669,7 +687,7 @@ O papel deles é orientar a execução do mesmo pipeline dentro do contexto do C
 
 #### Codex
 
-O perfil padrão deste repositório em `.codex/config.toml` é `minimal`, então:
+O perfil padrão deste repositório em `.codex/config.toml` é enxuto, então:
 
 - `agent-governance`
 - `execute-task`
@@ -679,7 +697,13 @@ O perfil padrão deste repositório em `.codex/config.toml` é `minimal`, então
 
 ficam habilitadas por default.
 
-As skills de planejamento entram quando você instalar o projeto-alvo com:
+Para projetos-alvo instalados via `install.sh`, o default do gerador é `full`, então as skills de planejamento entram automaticamente. Se quiser manter o mesmo perfil enxuto deste repositório, instale com:
+
+```bash
+CODEX_SKILL_PROFILE=lean bash install.sh --tools codex --langs all /caminho/do/projeto
+```
+
+Se quiser explicitar o perfil completo, use:
 
 ```bash
 CODEX_SKILL_PROFILE=full bash install.sh --tools codex --langs all /caminho/do/projeto
@@ -735,7 +759,358 @@ find tasks/prd-checkout-com-cupons-por-segmento -maxdepth 1 -type f | sort
 .claude/scripts/validate-task-evidence.sh tasks/prd-checkout-com-cupons-por-segmento/1_execution_report.md
 ```
 
-8. repetir a execução até todas as tarefas críticas estarem em `done`.
+## Sessão simulada de ponta a ponta
+
+Esta seção mostra uma sessão completa, com prompts realistas, para uma feature simples em Go: criar um endpoint HTTP para listar pagamentos.
+
+O objetivo aqui não é congelar um único formato de resposta, e sim mostrar a ordem operacional correta entre as skills, os arquivos esperados e os pontos em que o fluxo pode parar com `needs_input`, `blocked` ou `REJECTED`.
+
+### Cenário
+
+Suponha um serviço Go já existente com API HTTP e persistência de pagamentos. A demanda de produto é:
+
+- expor um endpoint `GET /payments`;
+- permitir filtros básicos por `status` e `customer_id`;
+- suportar paginação;
+- retornar contrato estável para consumo por frontend e integrações internas.
+
+Slug adotado no exemplo:
+
+```text
+tasks/prd-listar-pagamentos/
+```
+
+### Prompt inicial do usuário
+
+Exemplo de pedido inicial ao agente:
+
+```text
+Precisamos de uma feature para listar pagamentos no serviço Go. Quero um endpoint GET /payments com paginação e filtros por status e customer_id. Use o fluxo canônico completo: PRD, tech spec, tasks, execução, revisão e evidências.
+```
+
+### Etapa 1: create-prd
+
+Prompt recomendado:
+
+```text
+Use create-prd para a feature "listar pagamentos". Gere ou atualize tasks/prd-listar-pagamentos/prd.md. Contexto inicial: serviço Go existente, endpoint GET /payments, filtros por status e customer_id, paginação, resposta JSON para consumo de frontend e integrações internas. Se faltar contexto objetivo, faça no máximo duas rodadas de perguntas e retorne needs_input.
+```
+
+Saída esperada:
+
+```text
+tasks/prd-listar-pagamentos/prd.md
+```
+
+O PRD deveria deixar claros ao menos estes pontos:
+
+- objetivo da feature;
+- personas ou consumidores do endpoint;
+- requisitos funcionais numerados;
+- regras de paginação;
+- comportamento esperado para filtros inválidos;
+- itens fora de escopo, por exemplo ordenação avançada ou exportação CSV.
+
+Verificação manual:
+
+```bash
+sed -n '1,260p' tasks/prd-listar-pagamentos/prd.md
+```
+
+### Etapa 2: create-technical-specification
+
+Prompt recomendado:
+
+```text
+Use create-technical-specification para tasks/prd-listar-pagamentos/prd.md. Explore apenas o código relevante do serviço Go, especialmente rotas HTTP, handlers, camada de aplicação, repositórios, modelos de pagamento, paginação, observabilidade e testes. Gere tasks/prd-listar-pagamentos/techspec.md e crie ADRs separadas para decisões materiais.
+```
+
+Saídas esperadas:
+
+```text
+tasks/prd-listar-pagamentos/techspec.md
+tasks/prd-listar-pagamentos/adr-001-<slug>.md
+tasks/prd-listar-pagamentos/adr-002-<slug>.md
+```
+
+Decisões que tipicamente apareceriam nessa tech spec:
+
+- contrato do endpoint `GET /payments`;
+- formato dos query params `page`, `page_size`, `status`, `customer_id`;
+- shape da resposta JSON;
+- mapeamento entre handler, use case e repositório;
+- estratégia para paginação estável;
+- tratamento de erro para filtros inválidos;
+- testes unitários e de integração a serem adicionados;
+- logs, métricas e rastreabilidade mínima do endpoint.
+
+Exemplos de ADRs plausíveis:
+
+- `adr-001-paginacao-offset-limit.md`
+- `adr-002-contrato-http-de-listagem-de-pagamentos.md`
+
+Verificação manual:
+
+```bash
+sed -n '1,260p' tasks/prd-listar-pagamentos/techspec.md
+find tasks/prd-listar-pagamentos -maxdepth 1 -type f | sort
+```
+
+### Etapa 3: create-tasks
+
+Primeiro prompt, apenas para proposta do plano:
+
+```text
+Use create-tasks para tasks/prd-listar-pagamentos/prd.md e tasks/prd-listar-pagamentos/techspec.md. Primeiro proponha somente o plano de alto nível para aprovação. Não gere tasks.md nem os arquivos detalhados ainda.
+```
+
+Exemplo de plano de alto nível que seria razoável aprovar:
+
+1. adicionar contrato HTTP, validação de query params e handler de listagem;
+2. implementar caso de uso e acesso ao repositório com filtros e paginação;
+3. adicionar testes unitários e de integração do endpoint;
+4. revisar observabilidade, documentação e evidências finais.
+
+Depois da aprovação:
+
+```text
+Plano aprovado. Gere tasks/prd-listar-pagamentos/tasks.md e os arquivos detalhados de tarefa, com dependências, critérios de aceitação e testes explícitos.
+```
+
+Saídas esperadas:
+
+```text
+tasks/prd-listar-pagamentos/tasks.md
+tasks/prd-listar-pagamentos/1.0-contrato-http-e-handler.md
+tasks/prd-listar-pagamentos/2.0-use-case-e-repositorio.md
+tasks/prd-listar-pagamentos/3.0-testes-da-listagem.md
+tasks/prd-listar-pagamentos/4.0-observabilidade-e-documentacao.md
+```
+
+Verificação manual:
+
+```bash
+sed -n '1,260p' tasks/prd-listar-pagamentos/tasks.md
+find tasks/prd-listar-pagamentos -maxdepth 1 -type f | sort
+```
+
+### Etapa 4: execute-task
+
+Agora o fluxo sai do planejamento e entra em implementação real.
+
+Prompt recomendado para a primeira tarefa elegível:
+
+```text
+Use execute-task para a primeira tarefa elegível em tasks/prd-listar-pagamentos/. Leia prd.md, techspec.md, tasks.md e o arquivo da tarefa. Como esta feature altera código Go, carregue o contexto de Go sob demanda. Implemente, adicione testes, rode validação proporcional, faça a revisão e retorne o caminho do relatório de execução com o estado final.
+```
+
+O que normalmente aconteceria nessa execução:
+
+- leitura de `AGENTS.md` e `agent-governance`;
+- carga de `go-implementation`;
+- implementação do handler e validação de query params;
+- atualização do caso de uso ou service;
+- adição de testes;
+- execução de `go test` ou do comando equivalente detectado no projeto;
+- geração de relatório de execução.
+
+Saída esperada:
+
+```text
+tasks/prd-listar-pagamentos/1_execution_report.md
+```
+
+Verificação manual:
+
+```bash
+sed -n '1,260p' tasks/prd-listar-pagamentos/1_execution_report.md
+```
+
+### Etapa 5: review
+
+Mesmo quando `execute-task` já conduz a revisão dentro do fluxo, é útil mostrar o prompt explícito, porque muitos times preferem rodar `review` de forma deliberada ao final de uma fatia maior.
+
+Prompt recomendado:
+
+```text
+Use review para revisar o diff da implementação da feature listar pagamentos no serviço Go. Priorize bugs, regressões, riscos de contrato HTTP, paginação, tratamento de erro, observabilidade e testes faltantes. Retorne primeiro os achados com severidade e depois o veredito canônico.
+```
+
+Saída esperada:
+
+- findings ordenados por severidade;
+- veredito `APPROVED`, `APPROVED_WITH_REMARKS` ou `REJECTED`.
+
+Exemplo de achados plausíveis nessa feature:
+
+- paginação sem limite máximo, permitindo `page_size` excessivo;
+- filtro `status` aceitando valor inválido e vazando erro de banco;
+- ausência de teste cobrindo resposta vazia com metadados de paginação;
+- contrato JSON sem campo `next_page` documentado na tech spec.
+
+### Etapa 6: bugfix se a review reprovar
+
+Se a revisão voltar com `REJECTED`, o fluxo continua com remediação antes do encerramento.
+
+Prompt recomendado:
+
+```text
+Use bugfix para corrigir os achados da revisão da feature listar pagamentos, mantendo o escopo da tarefa atual. Atualize testes de regressão, rode novamente as validações necessárias e gere o relatório de correção.
+```
+
+Saída esperada:
+
+```text
+tasks/prd-listar-pagamentos/bugfix_report.md
+```
+
+Depois disso, uma nova revisão deve ser rodada:
+
+```text
+Use review novamente para revisar apenas o diff residual da remediação da feature listar pagamentos e retorne o veredito canônico.
+```
+
+### Etapa 7: fechamento e evidências
+
+Ao final de uma execução saudável, o diretório da feature tende a ficar assim:
+
+```text
+tasks/prd-listar-pagamentos/
+├── prd.md
+├── techspec.md
+├── adr-001-paginacao-offset-limit.md
+├── adr-002-contrato-http-de-listagem-de-pagamentos.md
+├── tasks.md
+├── 1.0-contrato-http-e-handler.md
+├── 2.0-use-case-e-repositorio.md
+├── 3.0-testes-da-listagem.md
+├── 4.0-observabilidade-e-documentacao.md
+├── 1_execution_report.md
+└── bugfix_report.md
+```
+
+`bugfix_report.md` só existe quando houve remediação após findings.
+
+Verificações finais úteis:
+
+```bash
+find tasks/prd-listar-pagamentos -maxdepth 1 -type f | sort
+sed -n '1,220p' tasks/prd-listar-pagamentos/prd.md
+sed -n '1,260p' tasks/prd-listar-pagamentos/techspec.md
+sed -n '1,260p' tasks/prd-listar-pagamentos/tasks.md
+sed -n '1,260p' tasks/prd-listar-pagamentos/1_execution_report.md
+.claude/scripts/validate-task-evidence.sh tasks/prd-listar-pagamentos/1_execution_report.md
+```
+
+### Versão curta dos prompts em sequência
+
+Se você quiser uma sequência direta, quase pronta para copiar em uma sessão real, ela fica assim:
+
+```text
+1. Use create-prd para a feature "listar pagamentos" e gere tasks/prd-listar-pagamentos/prd.md.
+
+2. Use create-technical-specification para tasks/prd-listar-pagamentos/prd.md. Explore apenas o código Go relevante e gere techspec.md e ADRs.
+
+3. Use create-tasks para o PRD e a tech spec da feature listar pagamentos. Primeiro proponha apenas o plano de alto nível para aprovação.
+
+4. Plano aprovado. Gere tasks/prd-listar-pagamentos/tasks.md e os arquivos detalhados de tarefa.
+
+5. Use execute-task para a primeira tarefa elegível em tasks/prd-listar-pagamentos/ e retorne o caminho do relatório de execução com o estado final.
+
+6. Use review para revisar o diff da implementação da feature listar pagamentos e retorne findings e veredito canônico.
+
+7. Se o veredito for REJECTED, use bugfix para corrigir os achados, rodar regressão e gerar bugfix_report.md.
+
+8. Use review novamente para validar a remediação e retornar o veredito final.
+```
+
+### Exemplos de prompts prontos
+
+Os exemplos abaixo servem quando você quer falar com o agente de forma mais natural, sem depender só do nome da skill. Eles também ajudam a padronizar o nível de detalhe esperado na resposta.
+
+#### Prompt completo de abertura
+
+```text
+Quero implementar uma feature nova no serviço Go: um endpoint GET /payments para listar pagamentos. O endpoint precisa aceitar paginação e filtros por status e customer_id. Siga o fluxo canônico completo deste repositório: gere o PRD, depois a especificação técnica com ADRs se necessário, depois proponha o plano de tarefas, espere aprovação, gere as tarefas detalhadas, execute a primeira tarefa elegível, rode validação proporcional, faça review e registre as evidências.
+```
+
+#### Prompt para create-prd com mais contexto
+
+```text
+Use create-prd para a feature "listar pagamentos". Considere que o consumidor principal será o frontend administrativo, mas o contrato também pode ser usado por integrações internas. O endpoint deve retornar lista paginada, aceitar filtros por status e customer_id, e deixar fora de escopo ordenação avançada, exportação e filtros compostos mais sofisticados. Gere tasks/prd-listar-pagamentos/prd.md. Se faltar contexto crítico, faça no máximo duas rodadas de perguntas.
+```
+
+#### Prompt para create-prd quando você quer objetividade máxima
+
+```text
+Use create-prd para "listar pagamentos". Não entre em detalhes de implementação. Foque em objetivo, requisitos funcionais numerados, restrições, fora de escopo, critérios de sucesso e ambiguidades que precisem de esclarecimento. Salve em tasks/prd-listar-pagamentos/prd.md.
+```
+
+#### Prompt para create-technical-specification com foco arquitetural
+
+```text
+Use create-technical-specification para tasks/prd-listar-pagamentos/prd.md. Explore apenas as partes do serviço Go relevantes para rotas HTTP, handlers, camada de aplicação, modelos de pagamento, paginação, observabilidade, tratamento de erro e testes. Gere tasks/prd-listar-pagamentos/techspec.md, mapeie requisito -> decisão -> teste e crie ADRs separadas para decisões materiais.
+```
+
+#### Prompt para create-technical-specification com foco em contrato HTTP
+
+```text
+Use create-technical-specification para a feature listar pagamentos e seja concreto no contrato do endpoint. Quero ver método, path, query params, formato da resposta JSON, comportamento para filtros inválidos, paginação, erros esperados e estratégia de testes. Gere techspec.md e ADRs no diretório tasks/prd-listar-pagamentos/.
+```
+
+#### Prompt para create-tasks em modo aprovação
+
+```text
+Use create-tasks para tasks/prd-listar-pagamentos/prd.md e tasks/prd-listar-pagamentos/techspec.md. Primeiro me mostre apenas um plano de alto nível com poucas tarefas, dependências e riscos. Não gere tasks.md ainda. Quero aprovar a decomposição antes.
+```
+
+#### Prompt para create-tasks após aprovação
+
+```text
+Plano aprovado. Agora use create-tasks para gerar tasks/prd-listar-pagamentos/tasks.md e os arquivos detalhados de cada tarefa. Inclua critérios de aceitação, dependências, testes esperados e sinais claros de done.
+```
+
+#### Prompt para execute-task com foco em implementação real
+
+```text
+Use execute-task para a primeira tarefa elegível em tasks/prd-listar-pagamentos/. Leia prd.md, techspec.md, tasks.md e o arquivo da tarefa antes de editar qualquer código. Como a tarefa altera código Go, carregue a skill de Go sob demanda. Faça a menor mudança segura, adicione testes de regressão, rode validação proporcional e retorne o caminho do relatório de execução com o estado final.
+```
+
+#### Prompt para execute-task em uma tarefa específica
+
+```text
+Use execute-task para a tarefa 2.0 em tasks/prd-listar-pagamentos/. Não escolha outra tarefa. Siga os critérios de aceitação exatamente como estão definidos, preserve o comportamento público fora do escopo e gere o relatório final da execução.
+```
+
+#### Prompt para review com viés de dono do código
+
+```text
+Use review para revisar o diff da feature listar pagamentos no serviço Go. Quero uma revisão rigorosa no estilo code owner: priorize bugs, regressões comportamentais, riscos de paginação, contrato HTTP, tratamento de erro, observabilidade e testes faltantes. Liste primeiro os findings com severidade e referência de arquivo quando aplicável, depois dê o veredito canônico.
+```
+
+#### Prompt para review depois de bugfix
+
+```text
+Use review novamente para revisar apenas o diff residual após a remediação da feature listar pagamentos. Verifique se os achados anteriores foram realmente corrigidos, se não surgiram regressões e retorne o veredito canônico.
+```
+
+#### Prompt para bugfix após review rejeitada
+
+```text
+Use bugfix para corrigir os findings da review da feature listar pagamentos. Mantenha o escopo limitado aos problemas apontados, atualize os testes necessários, rode regressão proporcional e gere tasks/prd-listar-pagamentos/bugfix_report.md com as evidências da correção.
+```
+
+#### Prompt para retomar uma sessão interrompida
+
+```text
+Retome a feature listar pagamentos a partir dos artefatos já existentes em tasks/prd-listar-pagamentos/. Primeiro leia prd.md, techspec.md, tasks.md e o status atual das tarefas. Depois continue apenas da próxima etapa elegível do fluxo, sem recriar artefatos que já estejam prontos.
+```
+
+#### Prompt para exigir disciplina de saída
+
+```text
+Ao executar esta etapa, não me entregue só um resumo. Quero os caminhos dos arquivos gerados ou atualizados, o estado final canônico da etapa, os bloqueios ou suposições e os comandos de validação executados.
+```
 
 ### Sinais de que o fluxo está saudável
 
