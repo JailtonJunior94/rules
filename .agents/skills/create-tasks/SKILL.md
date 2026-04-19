@@ -31,6 +31,10 @@ description: Cria tarefas incrementais de implementação a partir de um PRD e d
 2. Criar um arquivo por tarefa usando `assets/task-template.md`.
 3. Dar a cada tarefa critérios de aceitação explícitos, arquivos relevantes e expectativas de teste.
 4. Garantir que cada tarefa seja executável de forma independente e revisável objetivamente.
+5. Ao escrever `tasks.md`, calcular e inserir os comentários de rastreabilidade de spec no cabeçalho:
+   - `<!-- spec-hash-prd: $(sha256sum tasks/prd-<feature-slug>/prd.md | awk '{print $1}') -->`
+   - `<!-- spec-hash-techspec: $(sha256sum tasks/prd-<feature-slug>/techspec.md | awk '{print $1}') -->`
+   Estes hashes permitem detectar drift posterior via `bash scripts/check-spec-drift.sh`.
 
 **Etapa 5: Marcar dependências e paralelismo com clareza**
 1. Usar apenas estados canônicos: `pending`, `in_progress`, `needs_input`, `blocked`, `failed`, `done`.

@@ -108,8 +108,8 @@ else
   fail "validate-bug-schema: arquivo ausente"
 fi
 
-# Testar com input valido
-echo '[{"id":"BUG-001","severity":"major","file":"test.go","line":1,"reproduction":"x","expected":"y","actual":"z"}]' > /tmp/gov-lint-valid.json
+# Testar com input valido (campos semanticos com >= 5 palavras cada)
+echo '[{"id":"BUG-001","severity":"major","file":"test.go","line":1,"reproduction":"chamar funcao X sem parametro Y","expected":"retornar erro descritivo ao chamador","actual":"panic nil pointer dereference em producao"}]' > /tmp/gov-lint-valid.json
 if bash "$validate_bug" /tmp/gov-lint-valid.json > /dev/null 2>&1; then
   pass "validate-bug-schema: aceita input valido"
 else
@@ -126,7 +126,145 @@ else
 fi
 rm -f /tmp/gov-lint-invalid.json
 
-# ========== 7. Parse-hook-input.sh existe ==========
+# ========== 7. validate-bugfix-evidence.sh existe e funciona ==========
+echo "=== Bugfix evidence validator ==="
+
+bugfix_validator="$ROOT_DIR/.claude/scripts/validate-bugfix-evidence.sh"
+
+if [[ -f "$bugfix_validator" ]]; then
+  pass "validate-bugfix-evidence: arquivo existe"
+else
+  fail "validate-bugfix-evidence: arquivo ausente"
+fi
+
+if [[ -f "$bugfix_validator" ]]; then
+  # Relatorio valido deve passar
+  cat > /tmp/gov-bugfix-valid.md <<'EOF'
+# Relatorio de Bugfix
+
+- Total de bugs no escopo: 1
+- Corrigidos: 1
+
+## Bugs
+- ID: BUG-001
+- Severidade: major
+- Estado: fixed
+- Causa raiz: nil pointer no handler de autenticacao
+- Arquivos alterados: internal/auth/handler.go
+- Teste de regressao: TestAuthHandler_NilToken
+- Validacao: go test ./internal/auth/... pass
+
+## Comandos Executados
+- go test ./internal/auth/... -> PASS
+
+## Riscos Residuais
+- Nenhum
+
+- Estado final: done
+EOF
+
+  if bash "$bugfix_validator" /tmp/gov-bugfix-valid.md > /dev/null 2>&1; then
+    pass "validate-bugfix-evidence: aceita relatorio valido"
+  else
+    fail "validate-bugfix-evidence: rejeitou relatorio valido"
+  fi
+  rm -f /tmp/gov-bugfix-valid.md
+
+  # Relatorio invalido (sem estado terminal) deve falhar
+  cat > /tmp/gov-bugfix-invalid.md <<'EOF'
+# Relatorio Incompleto
+Sem secoes obrigatorias.
+EOF
+
+  if bash "$bugfix_validator" /tmp/gov-bugfix-invalid.md > /dev/null 2>&1; then
+    fail "validate-bugfix-evidence: aceitou relatorio invalido"
+  else
+    pass "validate-bugfix-evidence: rejeitou relatorio invalido"
+  fi
+  rm -f /tmp/gov-bugfix-invalid.md
+fi
+
+# ========== 8. validate-refactor-evidence.sh existe e funciona ==========
+echo "=== Refactor evidence validator ==="
+
+refactor_validator="$ROOT_DIR/.claude/scripts/validate-refactor-evidence.sh"
+
+if [[ -f "$refactor_validator" ]]; then
+  pass "validate-refactor-evidence: arquivo existe"
+else
+  fail "validate-refactor-evidence: arquivo ausente"
+fi
+
+if [[ -f "$refactor_validator" ]]; then
+  # Relatorio valido (advisory mode) deve passar
+  cat > /tmp/gov-refactor-valid.md <<'EOF'
+# Relatorio de Refatoracao
+
+## Escopo
+- Alvo: internal/order/domain.go
+- Modo: advisory
+- Estado: done
+
+## Invariantes Preservadas
+- Contrato publico OrderRepository mantido
+
+## Mudancas Propostas ou Aplicadas
+- Extrair calculo de preco para metodo isolado
+
+## Comandos Executados
+- go test ./internal/order/... -> PASS
+
+## Resultados de Validacao
+- Testes: pass
+- Lint: pass
+- Veredito do Revisor: n/a
+
+## Suposicoes
+- Nenhuma
+
+## Riscos Residuais
+- Nenhum
+EOF
+
+  if bash "$refactor_validator" /tmp/gov-refactor-valid.md > /dev/null 2>&1; then
+    pass "validate-refactor-evidence: aceita relatorio valido (advisory)"
+  else
+    fail "validate-refactor-evidence: rejeitou relatorio valido"
+  fi
+  rm -f /tmp/gov-refactor-valid.md
+
+  # Relatorio de execution sem veredito do revisor deve falhar
+  cat > /tmp/gov-refactor-no-verdict.md <<'EOF'
+## Escopo
+- Modo: execution
+- Estado: done
+
+## Invariantes Preservadas
+- Invariante A
+
+## Mudancas Propostas ou Aplicadas
+- Mudanca X
+
+## Comandos Executados
+- cmd -> result
+
+## Resultados de Validacao
+- Testes: pass
+- Lint: pass
+
+## Riscos Residuais
+- Nenhum
+EOF
+
+  if bash "$refactor_validator" /tmp/gov-refactor-no-verdict.md > /dev/null 2>&1; then
+    fail "validate-refactor-evidence: aceitou execution sem veredito do revisor"
+  else
+    pass "validate-refactor-evidence: rejeitou execution sem veredito do revisor"
+  fi
+  rm -f /tmp/gov-refactor-no-verdict.md
+fi
+
+# ========== 9. Parse-hook-input.sh existe ==========
 echo "=== Hooks lib ==="
 
 parse_hook="$ROOT_DIR/scripts/lib/parse-hook-input.sh"

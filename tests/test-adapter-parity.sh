@@ -62,6 +62,20 @@ for skill in "${GEMINI_EXPECTED_SKILLS[@]}"; do
   fi
 done
 
+echo "=== Gemini skill path reference ==="
+for skill in "${GEMINI_EXPECTED_SKILLS[@]}"; do
+  toml_path="$ROOT_DIR/.gemini/commands/${skill}.toml"
+  if [[ ! -e "$toml_path" ]]; then
+    echo "FAIL  gemini-ref/$skill -> file missing"
+    FAILED=$((FAILED + 1))
+  elif grep -q "\.agents/skills/${skill}" "$toml_path" 2>/dev/null; then
+    PASSED=$((PASSED + 1))
+  else
+    echo "FAIL  gemini-ref/$skill -> .agents/skills/${skill} not referenced in $toml_path"
+    FAILED=$((FAILED + 1))
+  fi
+done
+
 echo ""
 echo "Resultado: $PASSED passed, $FAILED failed"
 if [[ "$FAILED" -gt 0 ]]; then

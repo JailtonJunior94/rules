@@ -1,0 +1,12 @@
+description = "Cria e gerencia pull requests no GitHub com titulo, descricao estruturada e checklist de teste"
+prompt = """
+Use `.agents/skills/pull-request/SKILL.md` como fluxo canonico desta tarefa.
+Nao invente um processo paralelo neste comando.
+
+Contrato de carga obrigatorio (executar antes de qualquer acao):
+1. Ler `AGENTS.md` para contexto de arquitetura e regras.
+2. Ler `.agents/skills/agent-governance/SKILL.md` para governanca base.
+
+Aplicar a habilidade a esta solicitacao:
+{{args}}
+"""

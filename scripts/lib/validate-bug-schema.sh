@@ -33,6 +33,12 @@ import json
 import re
 import sys
 
+# Campos semanticos que exigem texto descritivo minimo (palavras).
+# Evita bugs com campos preenchidos com texto vago como "funciona" ou "erro".
+_SEMANTIC_FIELDS = {"reproduction", "expected", "actual"}
+_MIN_WORDS = 5
+
+
 def validate(bugs_path, schema_path):
     with open(bugs_path) as f:
         try:
@@ -95,6 +101,18 @@ def validate(bugs_path, schema_path):
                 if "enum" in spec and val not in spec["enum"]:
                     print(f"ERRO: bugs[{i}].{field} valor '{val}' nao esta em {spec['enum']}", file=sys.stderr)
                     valid = False
+
+                # Validacao semantica: campos descritivos devem ter texto suficiente
+                if field in _SEMANTIC_FIELDS and isinstance(val, str):
+                    word_count = len(val.split())
+                    if word_count < _MIN_WORDS:
+                        print(
+                            f"ERRO: bugs[{i}].{field} e semanticamente vazio "
+                            f"({word_count} palavra(s), minimo {_MIN_WORDS}). "
+                            f"Descreva o cenario com detalhes suficientes para reproducao.",
+                            file=sys.stderr,
+                        )
+                        valid = False
 
             elif spec["type"] == "integer":
                 if not isinstance(val, int) or isinstance(val, bool):

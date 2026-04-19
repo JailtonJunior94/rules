@@ -29,6 +29,8 @@ jobs:
           - skill-frontmatter
           - e2e
           - governance-lint
+          - gemini-e2e
+          - spec-drift
     steps:
       - uses: actions/checkout@v4
 

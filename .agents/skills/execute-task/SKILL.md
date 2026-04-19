@@ -10,10 +10,12 @@ description: Executa uma tarefa de implementação aprovada por meio de codifica
 ## Procedimentos
 
 **Etapa 1: Validar a elegibilidade da tarefa**
-1. Confirmar que `tasks/prd-<feature-slug>/tasks.md`, o arquivo de tarefa alvo, `prd.md` e `techspec.md` estão presentes.
-2. Selecionar a primeira tarefa elegível apenas quando o usuário não tiver escolhido uma explicitamente.
-3. Confirmar que todas as dependências da tarefa estão em `done`.
-4. Parar com `needs_input` ou `blocked` se a tarefa não for elegível para execução.
+1. Verificar profundidade de invocação: `source scripts/lib/check-invocation-depth.sh || { echo "failed: depth limit exceeded"; exit 1; }` — parar se o limite for atingido.
+2. Confirmar que `tasks/prd-<feature-slug>/tasks.md`, o arquivo de tarefa alvo, `prd.md` e `techspec.md` estão presentes.
+3. Executar gate de cobertura de RF: `bash scripts/check-rf-coverage.sh tasks/prd-<feature-slug>/prd.md tasks/prd-<feature-slug>/tasks.md` — parar com `blocked` se houver RFs não cobertos.
+4. Selecionar a primeira tarefa elegível apenas quando o usuário não tiver escolhido uma explicitamente.
+5. Confirmar que todas as dependências da tarefa estão em `done`.
+6. Parar com `needs_input` ou `blocked` se a tarefa não for elegível para execução.
 
 **Etapa 2: Carregar o contexto de implementação**
 1. Ler por completo o arquivo de tarefa selecionado, `prd.md` e `techspec.md`.

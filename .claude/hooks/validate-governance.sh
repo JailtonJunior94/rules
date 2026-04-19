@@ -14,12 +14,15 @@
 # Saida: aviso em stderr quando um arquivo de governanca e editado.
 #
 # Modos (via variavel de ambiente GOVERNANCE_HOOK_MODE):
-#   warn  — emite aviso em stderr, exit 0 (default)
-#   fail  — emite aviso em stderr, exit 1 (bloqueia a edicao)
+#   fail  — emite aviso em stderr, exit 1 (bloqueia a edicao) [DEFAULT]
+#   warn  — emite aviso em stderr, exit 0 (nao bloqueia, opt-out explícito)
+#
+# Para desabilitar o bloqueio (nao recomendado fora de testes):
+#   export GOVERNANCE_HOOK_MODE=warn
 
 set -euo pipefail
 
-GOVERNANCE_HOOK_MODE="${GOVERNANCE_HOOK_MODE:-warn}"
+GOVERNANCE_HOOK_MODE="${GOVERNANCE_HOOK_MODE:-fail}"
 
 HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=../../scripts/lib/parse-hook-input.sh

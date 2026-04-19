@@ -42,6 +42,7 @@ description: Planeja ou executa refatorações incrementais seguras preservando 
 4. Aceitar apenas `APPROVED` ou `APPROVED_WITH_REMARKS` como veredito aprovador final.
 5. Ler `assets/refactor-report-template.md`.
 6. Salvar o relatório em `tasks/prd-<feature-slug>/refactor_report.md` quando estiver em contexto de tarefa; caso contrário, em `./refactor_report.md`.
+7. Validar o relatório com `bash .claude/scripts/validate-refactor-evidence.sh <caminho-do-relatorio>`; corrigir seções faltantes antes de encerrar.
 
 **Etapa 6: Retornar o estado final**
 1. Informar modo, validações, veredito do revisor quando aplicável e caminho do relatório.

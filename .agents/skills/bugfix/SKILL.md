@@ -9,7 +9,8 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 ## Procedimentos
 
 **Etapa 1: Validar entrada e escopo**
-1. Confirmar que a lista de bugs foi recebida no formato canonico `{ id, severity, file, line, reproduction, expected, actual }`.
+1. Verificar profundidade de invocação: `source scripts/lib/check-invocation-depth.sh || { echo "failed: depth limit exceeded"; exit 1; }` — parar se o limite for atingido.
+2. Confirmar que a lista de bugs foi recebida no formato canonico `{ id, severity, file, line, reproduction, expected, actual }`.
 2. Ler `references/canonical-bug-format.md` quando houver duvida sobre campos obrigatorios, severidades ou estados canonicos.
 3. Se a lista vier em arquivo JSON, executar `bash scripts/lib/validate-bug-schema.sh <caminho>` para validar contra o schema canonico antes de prosseguir. Alternativamente, usar `python3 scripts/validate-bug-input.py --input <caminho>` quando o validador de schema nao estiver disponivel.
 4. Se a lista estiver ausente, incompleta ou fora do formato canonico, retornar `needs_input` com os campos faltantes.
@@ -39,6 +40,7 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 2. Atualizar o estado de cada bug usando apenas `fixed`, `blocked`, `skipped` ou `failed`.
 3. Ler `assets/bugfix-report-template.md`.
 4. Salvar o relatorio em `tasks/prd-<feature-slug>/bugfix_report.md` quando estiver em contexto de tarefa; caso contrario, em `./bugfix_report.md`.
+5. Validar o relatorio com `bash .claude/scripts/validate-bugfix-evidence.sh <caminho-do-relatorio>`; corrigir secoes faltantes antes de encerrar.
 
 **Etapa 6: Encerrar o fluxo**
 1. Informar total de bugs no escopo, quantos foram corrigidos, quantos testes de regressao foram adicionados e quais itens ficaram pendentes com motivo.

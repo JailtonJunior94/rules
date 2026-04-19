@@ -9,7 +9,8 @@ description: Revisa um diff de código quanto a correção, segurança, regress�
 ## Procedimentos
 
 **Etapa 1: Carregar o contexto de revisão**
-1. Ler primeiro o diff ou os arquivos alterados.
+1. Verificar profundidade de invocação: `source scripts/lib/check-invocation-depth.sh || { echo "failed: depth limit exceeded"; exit 1; }` — parar se o limite for atingido.
+2. Ler primeiro o diff ou os arquivos alterados.
 2. Ler `prd.md`, `techspec.md`, arquivos de tarefa ou contexto de issue quando estiverem disponíveis e forem relevantes para a mudança.
 3. Confirmar que o contrato de carga base definido em `AGENTS.md` foi cumprido e carregar referências sob demanda quando afetarem materialmente a revisão:
    - `.agents/skills/agent-governance/references/ddd.md`

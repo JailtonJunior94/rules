@@ -173,22 +173,54 @@ def codex_skills() -> list[str]:
     return skills
 
 
-def tool_totals() -> dict[str, dict[str, int]]:
-    """Total tokens installed per tool (skills + refs + wrappers)."""
+def committed_files() -> set[Path]:
+    """Return set of absolute paths tracked by git (committed + staged).
+
+    Falls back to returning None on error so callers can decide whether to filter.
+    Uses subprocess to call ``git ls-files`` in ROOT.
+    """
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["git", "ls-files"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return {(ROOT / p.strip()).resolve() for p in result.stdout.splitlines() if p.strip()}
+    except Exception:
+        return set()
+
+
+def tool_totals(tracked: set[Path] | None = None) -> dict[str, dict[str, int]]:
+    """Total tokens installed per tool (skills + refs + wrappers).
+
+    When *tracked* is provided (a set of absolute resolved paths from
+    ``committed_files()``), only files present in that set are counted.
+    This ensures local metrics match CI behaviour when untracked files exist.
+    """
+
+    def _keep(p: Path) -> bool:
+        return tracked is None or p.resolve() in tracked
+
     tools: dict[str, dict[str, int]] = {}
 
-    # Claude Code: .claude/agents + .claude/skills (symlinks to .agents/skills)
+    # Claude Code: wrappers + rules + all skill content (SKILL.md + references).
+    # References are on-demand at runtime but are counted here as total installed footprint.
     claude_files: list[Path] = []
-    claude_files += sorted((ROOT / ".claude/agents").glob("*.md"))
-    claude_files += sorted((ROOT / ".claude/rules").glob("*.md"))
+    claude_files += [f for f in sorted((ROOT / ".claude/agents").glob("*.md")) if _keep(f)]
+    claude_files += [f for f in sorted((ROOT / ".claude/rules").glob("*.md")) if _keep(f)]
     for skill_dir in sorted((ROOT / ".agents/skills").iterdir()):
         if skill_dir.is_dir():
             for md in sorted(skill_dir.rglob("*.md")):
-                claude_files.append(md)
+                if _keep(md):
+                    claude_files.append(md)
     tools["claude"] = {"tokens_est": sum(int(file_metrics(f)["tokens_est"]) for f in claude_files if f.exists())}
 
-    # Gemini CLI: .gemini/commands + .agents/skills (read at runtime)
-    gemini_files: list[Path] = sorted((ROOT / ".gemini/commands").glob("*.toml"))
+    # Gemini CLI: .gemini/commands (adapters only; skills are read at runtime).
+    gemini_files = [f for f in sorted((ROOT / ".gemini/commands").glob("*.toml")) if _keep(f)]
     tools["gemini"] = {"tokens_est": sum(int(file_metrics(f)["tokens_est"]) for f in gemini_files if f.exists())}
 
     # Codex: only skills listed in .codex/config.toml
@@ -197,27 +229,72 @@ def tool_totals() -> dict[str, dict[str, int]]:
         skill_dir = ROOT / ".agents/skills" / skill_name
         if skill_dir.is_dir():
             for md in sorted(skill_dir.rglob("*.md")):
-                codex_tokens += int(file_metrics(md)["tokens_est"])
+                if _keep(md):
+                    codex_tokens += int(file_metrics(md)["tokens_est"])
     tools["codex"] = {"tokens_est": codex_tokens}
 
-    # Copilot: .github/agents + .github/skills (symlinks)
-    copilot_files: list[Path] = sorted((ROOT / ".github/agents").glob("*.md"))
+    # Copilot: .github/agents
+    copilot_files = [f for f in sorted((ROOT / ".github/agents").glob("*.md")) if _keep(f)]
     tools["copilot"] = {"tokens_est": sum(int(file_metrics(f)["tokens_est"]) for f in copilot_files if f.exists())}
 
     return tools
 
 
-def gather_metrics() -> dict[str, object]:
-    skill_files = sorted((ROOT / ".agents/skills").glob("*/SKILL.md"))
-    reference_files = sorted((ROOT / ".agents/skills").glob("*/references/*.md"))
-    wrapper_files = sorted((ROOT / ".claude/agents").glob("*.md"))
-    wrapper_files += sorted((ROOT / ".github/agents").glob("*.md"))
-    wrapper_files += sorted((ROOT / ".gemini/commands").glob("*.toml"))
+def effective_session_tokens() -> dict[str, dict[str, int]]:
+    """Typical session cost per tool: adapter loaded at startup + one operational skill at runtime.
+
+    This metric answers "what does a real session cost?" rather than
+    "what is the total installed footprint?".  It uses execute-task (Go)
+    as the representative operational flow.
+    """
+    base = [ROOT / "AGENTS.md", ROOT / ".agents/skills/agent-governance/SKILL.md"]
+    go_skill = ROOT / ".agents/skills/go-implementation/SKILL.md"
+    go_arch = ROOT / ".agents/skills/go-implementation/references/architecture.md"
+    execute_task = ROOT / ".agents/skills/execute-task/SKILL.md"
+    review_skill = ROOT / ".agents/skills/review/SKILL.md"
+
+    def _sum(*paths: Path) -> int:
+        return sum(int(file_metrics(p)["tokens_est"]) for p in paths if p.exists())
+
+    # Claude: AGENTS.md + agent-governance + go-implementation (arch) + execute-task + review
+    claude_session = _sum(*base, go_skill, go_arch, execute_task, review_skill)
+
+    # Gemini: one .toml adapter loaded at command dispatch + same runtime skills
+    sample_toml = ROOT / ".gemini/commands/execute-task.toml"
+    gemini_session = _sum(sample_toml) + _sum(*base, go_skill, go_arch, execute_task, review_skill)
+
+    # Codex: config entry (no runtime adapter token cost) + same runtime skills
+    codex_session = _sum(*base, go_skill, go_arch, execute_task)
+
+    # Copilot: one agent wrapper + AGENTS.md (agents load AGENTS.md as base)
+    copilot_wrapper = ROOT / ".github/agents/task-executor.agent.md"
+    copilot_session = _sum(copilot_wrapper) + _sum(*base)
+
+    return {
+        "claude": {"tokens_est": claude_session},
+        "gemini": {"tokens_est": gemini_session},
+        "codex": {"tokens_est": codex_session},
+        "copilot": {"tokens_est": copilot_session},
+    }
+
+
+def gather_metrics(committed_only: bool = False) -> dict[str, object]:
+    tracked: set[Path] | None = committed_files() if committed_only else None
+
+    def _keep(p: Path) -> bool:
+        return tracked is None or p.resolve() in tracked
+
+    skill_files = [p for p in sorted((ROOT / ".agents/skills").glob("*/SKILL.md")) if _keep(p)]
+    reference_files = [p for p in sorted((ROOT / ".agents/skills").glob("*/references/*.md")) if _keep(p)]
+    wrapper_files = [p for p in sorted((ROOT / ".claude/agents").glob("*.md")) if _keep(p)]
+    wrapper_files += [p for p in sorted((ROOT / ".github/agents").glob("*.md")) if _keep(p)]
+    wrapper_files += [p for p in sorted((ROOT / ".gemini/commands").glob("*.toml")) if _keep(p)]
 
     return {
         "baselines": baseline_metrics(),
         "flows": flow_metrics(),
-        "tool_totals": tool_totals(),
+        "tool_totals": tool_totals(tracked),
+        "effective_session_tokens": effective_session_tokens(),
         "skills": [file_metrics(path) for path in skill_files],
         "references": [file_metrics(path) for path in reference_files],
         "wrappers": [file_metrics(path) for path in wrapper_files],
@@ -257,6 +334,14 @@ def render_table(metrics: dict[str, object]) -> str:
         lines.append(f"- {tool_name}: est_tokens={payload['tokens_est']}")
 
     lines.append("")
+    lines.append("Effective Session Tokens (representative execute-task/Go flow):")
+    session = metrics.get("effective_session_tokens", {})
+    assert isinstance(session, dict)
+    for tool_name, payload in session.items():
+        assert isinstance(payload, dict)
+        lines.append(f"- {tool_name}: est_tokens={payload['tokens_est']}")
+
+    lines.append("")
     lines.append("Codex:")
     codex = metrics["codex"]
     assert isinstance(codex, dict)
@@ -267,9 +352,18 @@ def render_table(metrics: dict[str, object]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--format", choices=("json", "table"), default="table")
+    parser.add_argument(
+        "--committed-only",
+        action="store_true",
+        help=(
+            "Count only files tracked by git (excludes untracked/new files). "
+            "Use this flag to get metrics that match CI behaviour when working "
+            "with in-progress skill directories that are not yet committed."
+        ),
+    )
     args = parser.parse_args()
 
-    metrics = gather_metrics()
+    metrics = gather_metrics(committed_only=args.committed_only)
     if args.format == "json":
         print(json.dumps(metrics, indent=2, ensure_ascii=False))
     else:

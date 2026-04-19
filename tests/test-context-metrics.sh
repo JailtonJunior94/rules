@@ -161,8 +161,12 @@ PY
   fi
 }
 
-check_tool_total "claude" 70000
-check_tool_total "gemini" 4000
+# claude: todos os SKILL.md + references instalados. Limite generoso para acomodar
+# crescimento incremental de skills (atualmente ~23 skills × ~3k tokens medio).
+check_tool_total "claude" 90000
+# gemini: soma dos adaptadores .toml (nao inclui SKILL.md — lidos em runtime).
+# Limite ajustado para 23 skills × ~250 tokens por adapter.
+check_tool_total "gemini" 7000
 check_tool_total "codex" 13000
 check_tool_total "copilot" 2000
 
@@ -243,6 +247,26 @@ case "$drift_result" in
     pass "token-drift: verificacao ignorada (resultado inesperado)"
     ;;
 esac
+
+# Gate: --committed-only produz JSON valido e total claude <= total sem filtro
+committed_json="$(python3 "$METRICS_SCRIPT" --format json --committed-only 2>/dev/null || true)"
+
+if [[ -n "$committed_json" ]]; then
+  pass "committed-only: flag --committed-only retorna JSON"
+else
+  fail "committed-only: flag --committed-only falhou ou retornou vazio"
+fi
+
+if [[ -n "$committed_json" ]]; then
+  # Claude committed deve ser <= claude sem filtro (nunca maior)
+  claude_committed="$(echo "$committed_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["tool_totals"]["claude"]["tokens_est"])')"
+  claude_total="$(echo "$metrics_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["tool_totals"]["claude"]["tokens_est"])')"
+  if [[ "$claude_committed" -le "$claude_total" ]]; then
+    pass "committed-only/claude: committed (${claude_committed}) <= total (${claude_total})"
+  else
+    fail "committed-only/claude: committed (${claude_committed}) > total (${claude_total}) — inesperado"
+  fi
+fi
 
 echo ""
 echo "Resultado: $PASSED passed, $FAILED failed"

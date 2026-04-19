@@ -37,7 +37,15 @@ description: Orquestra regras de governanca, DDD, tratamento de erros, seguranca
 
 ## Controle de Profundidade de Invocacao
 
-Quando uma skill invoca outra (ex: execute-task -> review -> bugfix), manter um contador logico de profundidade. Se a profundidade exceder 2 niveis de invocacao cruzada (ex: execute-task invoca review que invoca bugfix que tentaria invocar review novamente), parar a cadeia e retornar `failed` com diagnostico: "limite de profundidade de invocacao atingido". Isso previne loops entre review e bugfix.
+Quando uma skill invoca outra (ex: execute-task -> review -> bugfix), incrementar `AI_INVOCATION_DEPTH` e verificar o limite antes de prosseguir:
+
+```bash
+source scripts/lib/check-invocation-depth.sh || { echo "failed: depth limit exceeded"; exit 1; }
+```
+
+Se `AI_INVOCATION_DEPTH` exceder 2 (o limite padrao de `AI_INVOCATION_MAX`), parar a cadeia e retornar `failed` com diagnostico: "limite de profundidade de invocacao atingido". Isso previne loops entre review e bugfix.
+
+O script `scripts/lib/check-invocation-depth.sh` gerencia o contador automaticamente quando sourced ou chamado como subprocesso.
 
 ## Tratamento de Erros
 * Se a tarefa nao deixar claro quais referencias carregar, aplicar `AGENTS.md` como baseline e ler apenas os arquivos tematicos diretamente ligados a superficie alterada.
