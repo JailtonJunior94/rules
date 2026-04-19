@@ -98,6 +98,37 @@ else
   fail "codex-minimal: config raiz diverge do baseline enxuto"
 fi
 
+# Gate: flow budgets
+check_flow_budget() {
+  local flow="$1"
+  local max_tokens="$2"
+  local tokens
+  tokens="$(METRICS_JSON="$metrics_json" python3 - "$flow" <<'PY'
+import json
+import os
+import sys
+
+payload = json.loads(os.environ["METRICS_JSON"])
+flow_name = sys.argv[1]
+data = payload["flows"].get(flow_name, {})
+print(data.get("tokens_est", 0))
+PY
+)"
+
+  if [[ "$tokens" -le "$max_tokens" ]]; then
+    pass "flow-budget/$flow: ${tokens} <= ${max_tokens}"
+  else
+    fail "flow-budget/$flow: ${tokens} > ${max_tokens}"
+  fi
+}
+
+check_flow_budget "execute-task (Go)" 7000
+check_flow_budget "execute-task (Node)" 6200
+check_flow_budget "execute-task (Python)" 6200
+check_flow_budget "review" 3000
+check_flow_budget "bugfix (Go)" 6000
+check_flow_budget "refactor (Go)" 6800
+
 if grep -q '".agents/skills/analyze-project"' "$ROOT_DIR/.codex/config.toml" 2>/dev/null; then
   fail "codex-regression: analyze-project presente no perfil enxuto"
 else

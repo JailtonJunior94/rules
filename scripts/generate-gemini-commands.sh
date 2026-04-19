@@ -100,6 +100,7 @@ Se revisao for necessaria, use \`.agents/skills/review/SKILL.md\` como processo 
 
   prompt_lines="$prompt_lines
 Nao invente um processo paralelo neste comando.
+Compliance: ler AGENTS.md e agent-governance/SKILL.md antes de editar; validar ao final conforme secao Validacao.
 
 Aplicar a habilidade a esta solicitacao:
 {{args}}"

@@ -4,6 +4,7 @@ Use `.agents/skills/refactor/SKILL.md` como fluxo canonico desta tarefa.
 Leia os assets referenciados sob demanda, especialmente `.agents/skills/refactor/assets/refactor-report-template.md`.
 Se revisao for necessaria, use `.agents/skills/review/SKILL.md` como processo de revisao.
 Nao invente um processo paralelo neste comando.
+Compliance: ler AGENTS.md e agent-governance/SKILL.md antes de editar; validar ao final conforme secao Validacao.
 
 Aplicar a habilidade a esta solicitacao:
 {{args}}

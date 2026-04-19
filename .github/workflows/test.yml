@@ -26,6 +26,7 @@ jobs:
           - detect-architecture
           - detect-toolchain
           - skill-frontmatter
+          - e2e
     steps:
       - uses: actions/checkout@v4
 

@@ -31,8 +31,14 @@ for fixture_dir in "$FIXTURES_DIR"/*/; do
   # Limpar output anterior
   rm -f "$output_file"
 
-  # Rodar o gerador com todas as flags desligadas (nao gera CLAUDE.md etc.)
-  INSTALL_CLAUDE=0 INSTALL_GEMINI=0 INSTALL_COPILOT=0 \
+  # Fixtures com sufixo codex-only ativam perfil compact (Codex exclusivo)
+  _install_codex=0
+  if [[ "$fixture_name" == "codex-only" ]]; then
+    _install_codex=1
+  fi
+
+  # Rodar o gerador com flags adequadas
+  INSTALL_CLAUDE=0 INSTALL_GEMINI=0 INSTALL_COPILOT=0 INSTALL_CODEX="$_install_codex" \
     bash "$GENERATOR" "$fixture_dir" 2>/dev/null
 
   if [[ ! -f "$output_file" ]]; then

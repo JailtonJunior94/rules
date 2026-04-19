@@ -28,10 +28,10 @@ description: Implementa alteracoes em codigo Python usando governanca base, conv
 11. Ler `references/graceful-lifecycle.md` quando a tarefa envolver shutdown gracioso, signal handling (SIGTERM/SIGINT), drain de conexoes, cleanup de asyncio tasks ou encerramento de workers.
 12. Ler `references/configuration.md` quando a tarefa envolver carregamento de configuracao, variaveis de ambiente, pydantic-settings ou inicializacao de dependencias.
 13. Ler `../agent-governance/references/error-handling.md` quando a tarefa criar, propagar, encapsular ou apresentar erros.
-14. Ler `../agent-governance/references/persistence.md` quando a tarefa envolver repositories, transactions, migrations, queries ou connection management.
-15. Ler `../agent-governance/references/observability.md` quando a tarefa envolver logging, tracing, metricas ou health checks.
-16. Ler `../agent-governance/references/security-app.md` quando a tarefa envolver autenticacao, autorizacao, validacao de input, rate limiting, CORS ou tratamento de segredos.
-17. Ler `../agent-governance/references/messaging.md` quando a tarefa envolver producao ou consumo de mensagens, eventos, filas, topicos ou idempotencia de consumidores.
+14. Ler `references/persistence.md` quando a tarefa envolver repositories, transactions, migrations, queries ou connection management.
+15. Ler `references/observability.md` quando a tarefa envolver logging, tracing, metricas ou health checks.
+16. Ler `references/security.md` quando a tarefa envolver autenticacao, autorizacao, validacao de input, rate limiting, CORS ou tratamento de segredos.
+17. Ler `references/messaging.md` quando a tarefa envolver producao ou consumo de mensagens, eventos, filas, topicos ou idempotencia de consumidores.
 
 **Economia de contexto**
 Se mais de 4 referencias forem necessarias para a mesma tarefa, priorizar as 3 mais criticas para o escopo da mudanca e registrar as demais como contexto nao carregado. Carregar referencias adicionais apenas se a implementacao revelar necessidade concreta.

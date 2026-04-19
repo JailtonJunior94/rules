@@ -1,4 +1,4 @@
-<!-- governance-schema: {{GOVERNANCE_SCHEMA_VERSION}} -->
+<!-- governance-schema: 1.0.0 -->
 # Regras para Agentes de IA
 
 Este diretorio centraliza regras para uso com agentes de IA em tarefas reais de analise, alteracao e validacao de codigo.
@@ -7,23 +7,29 @@ Este diretorio centraliza regras para uso com agentes de IA em tarefas reais de 
 
 Use estas instrucoes para manter consistencia, seguranca e qualidade ao trabalhar com codigo, configuracao, validacao e evolucao de sistemas.
 
-## Arquitetura: {{TIPO_ARQUITETURA}}
+## Arquitetura: monolito
 
-{{DESCRICAO_ARQUITETURA}}
+O projeto aparenta ser um monolito unico. A governanca deve privilegiar coesao local, limites de pacote claros e crescimento incremental da estrutura.
+
+Stack detectada: Go.
+Frameworks detectados: nenhum framework dominante identificado.
 
 ## Estrutura de Pastas
 
 ```
-{{ARVORE_DIRETORIOS}}
+.
+go.mod
 ```
 
 ## Padrao Arquitetural
 
-{{PADRAO_ARQUITETURAL}}
+Padrao arquitetural nao inferido com alta confianca; assumir composicao simples e dependencias explicitas.
 
 ### Fluxo de Dependencias
 
-{{FLUXO_DEPENDENCIAS}}
+- Transporte e adapters devem depender de casos de uso ou servicos explicitos, nao do contrario.
+- Dominio nao deve conhecer detalhes de HTTP, banco, filas, serializacao ou drivers.
+- Infraestrutura pode implementar contratos consumidos pela aplicacao, preservando dependencia para dentro.
 
 ## Modo de trabalho
 
@@ -35,17 +41,11 @@ Use estas instrucoes para manter consistencia, seguranca e qualidade ao trabalha
 6. Rodar validacoes proporcionais a mudanca.
 7. Registrar bloqueios e suposicoes explicitamente quando o contexto estiver incompleto.
 
-## Diretrizes de Estrutura
+## Regras por Arquitetura
 
-1. Priorize entendimento do codigo e do contexto atual antes de propor refatoracoes.
-2. Respeite padroes existentes de nomenclatura, organizacao e tratamento de erro.
-3. Defina estrutura simples, evolutiva e com defaults explicitos.
-4. Evite reescritas amplas quando uma alteracao localizada resolver o problema.
-5. Estabeleca contratos, testes e comandos de validacao cedo quando eles ainda nao existirem.
-6. Considere risco de regressao como restricao principal.
-7. Evite overengineering disfarcado de arquitetura futura.
-
-{{REGRAS_ARQUITETURA}}
+1. Preservar coesao local e dependencia unidirecional entre packages.
+2. Evitar helpers transversais que escondam regra de negocio ou IO.
+3. Crescer a estrutura apenas quando o codigo atual ja nao comportar a mudanca com clareza.
 
 ## Regras por Linguagem
 
@@ -53,15 +53,17 @@ Para tarefas que alteram codigo, carregar a skill:
 
 - `.agents/skills/agent-governance/SKILL.md`
 
-{{REGRAS_LINGUAGEM}}
+Para tarefas que alteram codigo Go, carregar tambem:
+
+- `.agents/skills/go-implementation/SKILL.md`
+
+Para tarefas de revisao ou refatoracao incremental de design em Go guiadas por heuristicas de object calisthenics, carregar tambem:
+
+- `.agents/skills/object-calisthenics-go/SKILL.md`
 
 Para tarefas de correcao de bugs com remediacao e teste de regressao, carregar tambem:
 
 - `.agents/skills/bugfix/SKILL.md`
-
-### Composicao Multi-Linguagem
-
-Em projetos com mais de uma linguagem (ex: monorepo Go + Node), carregar apenas a skill da linguagem afetada pela mudanca. Se a tarefa cruzar linguagens, carregar ambas e aplicar a validacao de cada stack nos arquivos correspondentes. Nao misturar convencoes de uma linguagem em arquivos de outra.
 
 ## Referencias
 
@@ -90,7 +92,12 @@ Ferramentas sem enforcement programatico dependem do modelo seguir instrucoes pr
 
 Antes de concluir uma alteracao:
 
-{{COMANDOS_VALIDACAO}}
+Seguir Etapa 4 de `.agents/skills/agent-governance/SKILL.md` como base canonica.
+
+Comandos detectados no projeto (Go):
+1. Rodar fmt: `gofmt -w .`.
+2. Rodar test: `go test ./...`.
+3. Rodar lint: `golangci-lint run`.
 
 ## Restricoes
 
@@ -98,5 +105,3 @@ Antes de concluir uma alteracao:
 2. Nao assumir versao de linguagem, framework ou runtime sem verificar.
 3. Nao alterar comportamento publico sem deixar isso explicito.
 4. Nao usar exemplos como copia cega; adaptar ao contexto real.
-
-{{RESTRICOES_ARQUITETURA}}

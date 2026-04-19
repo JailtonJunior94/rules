@@ -1,0 +1,28 @@
+[[skills.config]]
+path = ".agents/skills/agent-governance"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/bugfix"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/review"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/refactor"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/execute-task"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/go-implementation"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/object-calisthenics-go"
+enabled = true
+

@@ -2,6 +2,7 @@ description = "Revisa um diff de código quanto a correção, segurança, regres
 prompt = """
 Use `.agents/skills/review/SKILL.md` como fluxo canonico desta tarefa.
 Nao invente um processo paralelo neste comando.
+Compliance: ler AGENTS.md e agent-governance/SKILL.md antes de editar; validar ao final conforme secao Validacao.
 
 Aplicar a habilidade a esta solicitacao:
 {{args}}

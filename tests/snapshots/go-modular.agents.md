@@ -96,6 +96,18 @@ Cada skill lista suas proprias referencias em `references/` com gatilhos de carr
 - **Codex**: le `AGENTS.md` como instrucao de sessao. Entradas em `.codex/config.toml` sao metadados para `upgrade.sh`, nao spec oficial do Codex CLI. O agente deve seguir as instrucoes de `AGENTS.md` para descobrir e carregar skills.
 - **Copilot**: `.github/copilot-instructions.md` como instrucao principal. `.github/agents/` sao wrappers. Sem hooks nativos — compliance depende do modelo seguir as instrucoes.
 
+### Matrix de Enforcement
+
+| Capacidade | Claude Code | Gemini CLI | Codex | Copilot |
+|---|---|---|---|---|
+| Carga base automatica | hook PreToolUse | procedural | procedural | procedural |
+| Protecao de governanca | hook PostToolUse | procedural | procedural | procedural |
+| Skills pre-carregadas | sim (symlinks) | sim (commands) | nao | sim (agents) |
+| Enforcement programatico | sim (hooks) | nao | nao | nao |
+| Validacao de evidencias | script | procedural | procedural | procedural |
+
+Ferramentas sem enforcement programatico dependem do modelo seguir instrucoes procedurais. A compliance nessas ferramentas e best-effort.
+
 ## Validacao
 
 Antes de concluir uma alteracao:
