@@ -3,11 +3,23 @@ path = ".agents/skills/agent-governance"
 enabled = true
 
 [[skills.config]]
-path = ".agents/skills/bugfix"
+path = ".agents/skills/analyze-project"
 enabled = true
 
 [[skills.config]]
-path = ".agents/skills/review"
+path = ".agents/skills/create-prd"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/create-technical-specification"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/create-tasks"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/execute-task"
 enabled = true
 
 [[skills.config]]
@@ -15,7 +27,11 @@ path = ".agents/skills/refactor"
 enabled = true
 
 [[skills.config]]
-path = ".agents/skills/execute-task"
+path = ".agents/skills/review"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/bugfix"
 enabled = true
 
 [[skills.config]]

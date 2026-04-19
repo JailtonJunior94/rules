@@ -3,7 +3,17 @@ prompt = """
 Use `.agents/skills/node-implementation/SKILL.md` como fluxo canonico desta tarefa.
 Leia os assets e references sob demanda conforme descrito no SKILL.md.
 Nao invente um processo paralelo neste comando.
-Compliance: ler AGENTS.md e agent-governance/SKILL.md antes de editar; validar ao final conforme secao Validacao.
+
+Contrato de carga obrigatorio (executar antes de editar codigo):
+1. Ler `AGENTS.md` para contexto de arquitetura e regras.
+2. Ler `.agents/skills/agent-governance/SKILL.md` para governanca base.
+3. Carregar a skill de linguagem apropriada quando a tarefa alterar codigo (Go, Node ou Python).
+
+Validacao obrigatoria ao final:
+1. Rodar formatter nos arquivos alterados.
+2. Rodar testes direcionados aos modulos afetados.
+3. Rodar lint quando disponivel e proporcional ao risco.
+4. Registrar comandos executados, arquivos alterados e riscos residuais.
 
 Aplicar a habilidade a esta solicitacao:
 {{args}}

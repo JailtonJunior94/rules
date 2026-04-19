@@ -229,9 +229,9 @@ else
 fi
 
 if grep -q '".agents/skills/analyze-project"' "$NON_CONTEXTUAL_TARGET/.codex/config.toml"; then
-  fail "non-contextual-codex: inclui skill pesada fora do perfil minimal"
+  pass "non-contextual-codex: inclui skill de planejamento no perfil full (default)"
 else
-  pass "non-contextual-codex: nao inclui skill pesada fora do perfil minimal"
+  fail "non-contextual-codex: nao inclui skill de planejamento no perfil full (default)"
 fi
 
 # ============================================================

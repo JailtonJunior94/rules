@@ -295,13 +295,34 @@ Os testes usam fixtures em `tests/fixtures/` para validar diferentes cenários, 
 
 Os snapshots esperados do gerador ficam em `tests/snapshots/`.
 
-## Limitações e observações
+## Matriz de Enforcement por Ferramenta
 
-- `install.sh` e `upgrade.sh` rejeitam o próprio repositório `ai-governance` como alvo;
-- o diretório-alvo precisa existir antes da execução;
-- a geração contextual depende exclusivamente dos sinais encontrados localmente;
-- quando não há sinal forte suficiente, o gerador usa fallback conservador;
-- não há arquivo `LICENSE` nem `CONTRIBUTING.md` neste repositório no estado atual.
+| Capacidade | Claude Code | Gemini CLI | Codex | Copilot |
+|---|---|---|---|---|
+| Auto-load de instrucoes (`CLAUDE.md`, etc.) | Sim | Nao | Sim (`AGENTS.md`) | Sim |
+| Hooks de pre/pos-edicao | Sim (`PreToolUse`, `PostToolUse`) | Nao | Nao | Nao |
+| Agents delegadores | Sim (`.claude/agents/`) | Nao | Nao | Sim (`.github/agents/`) |
+| Commands/Skills como slash commands | Sim (`.claude/skills/`) | Sim (`@commands`) | Parcial (`[[skills.config]]`) | Nao |
+| Enforcement ativo de governanca | Sim (hooks bloqueantes) | Nao (procedural) | Nao (procedural) | Nao (procedural) |
+| Validacao de bug schema inter-skill | Sim (`validate-bug-schema.sh`) | Manual | Manual | Manual |
+| Compact profile para contexto menor | N/A | N/A | Sim (auto-detect) | N/A |
+
+**Implicacoes praticas**:
+
+- **Claude Code**: enforcement mais completo. Hooks alertam ou bloqueiam edicoes em arquivos de governanca e lembram o contrato de carga base antes de editar codigo. Skills e agents sao invocados automaticamente.
+- **Gemini CLI**: compliance depende de o modelo seguir as instrucoes procedurais do `GEMINI.md` e dos commands TOML. Nao ha enforcement ativo. Recomenda-se usar `@<command>` para invocar skills e seguir as etapas manualmente.
+- **Codex**: le `AGENTS.md` automaticamente como instrucao de sessao. Skills sao registradas em `config.toml` mas a invocacao depende do modelo. Sem hooks ou agents.
+- **Copilot**: agents em `.github/agents/` sao reconhecidos nativamente. `copilot-instructions.md` e carregado automaticamente. Sem hooks de enforcement.
+
+Para ferramentas sem enforcement ativo, a governanca funciona como guia procedural: o modelo e instruido a ler `AGENTS.md` e seguir as etapas, mas nao ha mecanismo que impeca desvios.
+
+## Limitacoes e observacoes
+
+- `install.sh` e `upgrade.sh` rejeitam o proprio repositorio `ai-governance` como alvo;
+- o diretorio-alvo precisa existir antes da execucao;
+- a geracao contextual depende exclusivamente dos sinais encontrados localmente;
+- quando nao ha sinal forte suficiente, o gerador usa fallback conservador;
+- nao ha arquivo `LICENSE` nem `CONTRIBUTING.md` neste repositorio no estado atual.
 
 ## Fluxo recomendado
 

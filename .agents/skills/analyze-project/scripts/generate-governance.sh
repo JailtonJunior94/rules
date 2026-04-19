@@ -698,6 +698,19 @@ GEMINI_EXTRA
       "CONFIG_LINE_3" "\`.github/agents/\` sao wrappers leves que apontam para a habilidade correta." \
       "SECAO_STACK" "$STACK_SECTION" \
       > "$PROJECT_DIR/.github/copilot-instructions.md"
+    # Append Copilot-specific guidance
+    cat >> "$PROJECT_DIR/.github/copilot-instructions.md" <<'COPILOT_EXTRA'
+
+## Orientacoes Especificas para Copilot
+
+O GitHub Copilot suporta agents em `.github/agents/` e carrega `copilot-instructions.md` automaticamente, mas nao suporta hooks de enforcement. Para manter compliance:
+
+1. Usar agents disponíveis em `.github/agents/` para delegar tarefas processuais (review, bugfix, execute-task, etc.).
+2. Cada agent aponta para a skill canonica em `.agents/skills/` — seguir as etapas procedurais do SKILL.md referenciado.
+3. Ao iniciar uma tarefa, confirmar que `AGENTS.md` e `agent-governance/SKILL.md` foram lidos.
+4. Ao final da tarefa, executar os comandos de validacao descritos na secao Validacao acima.
+5. Enforcement depende do modelo seguir as instrucoes — nao ha bloqueio automatico.
+COPILOT_EXTRA
   fi
 fi
 

@@ -59,13 +59,13 @@ import os
 
 payload = json.loads(os.environ["METRICS_JSON"])
 for item in payload["wrappers"]:
-    if item["words"] > 80:
+    if item["words"] > 150:
         raise SystemExit(1)
 PY
 then
-  pass "wrapper-budget: wrappers <= 80 palavras"
+  pass "wrapper-budget: wrappers <= 150 palavras"
 else
-  fail "wrapper-budget: wrapper excede 80 palavras"
+  fail "wrapper-budget: wrapper excede 150 palavras"
 fi
 
 if METRICS_JSON="$metrics_json" python3 - <<'PY'

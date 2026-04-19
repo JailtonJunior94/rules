@@ -305,9 +305,9 @@ GOVERNANCE_GENERATOR="$SOURCE_DIR/.agents/skills/analyze-project/scripts/generat
 SCHEMA_NEEDS_REGEN=0
 if [[ -f "$PROJECT_DIR/AGENTS.md" && -f "$SOURCE_DIR/.agents/skills/analyze-project/assets/agents-template.md" ]]; then
   _target_schema="$(grep -o 'governance-schema: [0-9.]*' "$PROJECT_DIR/AGENTS.md" 2>/dev/null | awk '{print $2}' || true)"
-  _source_schema="$(grep -o 'governance-schema: [^}]*' "$SOURCE_DIR/.agents/skills/analyze-project/assets/agents-template.md" 2>/dev/null | awk '{print $2}' || true)"
-  # Se o template tem schema mas o alvo nao, ou as versoes diferem, re-gerar
-  if [[ -n "$_source_schema" && "$_source_schema" != *"{{"* && "$_source_schema" != "$_target_schema" ]]; then
+  _source_schema="$(grep -o 'GOVERNANCE_SCHEMA_VERSION="[^"]*"' "$SOURCE_DIR/.agents/skills/analyze-project/scripts/generate-governance.sh" 2>/dev/null | head -1 | sed 's/.*="//;s/"//' || true)"
+  # Se a versao de schema da fonte difere da instalada, re-gerar
+  if [[ -n "$_source_schema" && "$_source_schema" != "$_target_schema" ]]; then
     echo "  SCHEMA DIVERGENTE  AGENTS.md (fonte: ${_source_schema:-ausente}, alvo: ${_target_schema:-ausente})"
     SCHEMA_NEEDS_REGEN=1
   fi

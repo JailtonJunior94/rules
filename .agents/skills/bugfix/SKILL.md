@@ -11,7 +11,7 @@ description: Corrige bugs pela causa raiz com testes de regressao obrigatorios e
 **Etapa 1: Validar entrada e escopo**
 1. Confirmar que a lista de bugs foi recebida no formato canonico `{ id, severity, file, line, reproduction, expected, actual }`.
 2. Ler `references/canonical-bug-format.md` quando houver duvida sobre campos obrigatorios, severidades ou estados canonicos.
-3. Se a lista vier em arquivo JSON, executar `python3 scripts/validate-bug-input.py --input <caminho>` antes de prosseguir.
+3. Se a lista vier em arquivo JSON, executar `bash scripts/lib/validate-bug-schema.sh <caminho>` para validar contra o schema canonico antes de prosseguir. Alternativamente, usar `python3 scripts/validate-bug-input.py --input <caminho>` quando o validador de schema nao estiver disponivel.
 4. Se a lista estiver ausente, incompleta ou fora do formato canonico, retornar `needs_input` com os campos faltantes.
 5. Confirmar o escopo de bugs a corrigir antes de editar qualquer arquivo.
 

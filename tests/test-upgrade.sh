@@ -186,6 +186,48 @@ else
 fi
 
 # ============================================================
+# Caso 11: schema version bump detectado e regenerado
+# ============================================================
+SCHEMA_PROJECT="$TMP_DIR/schema-project"
+mkdir -p "$SCHEMA_PROJECT"
+echo "module schema-test" > "$SCHEMA_PROJECT/go.mod"
+
+LINK_MODE=copy bash "$INSTALL_SCRIPT" --tools claude --langs go "$SCHEMA_PROJECT" > /dev/null 2>&1
+
+# Verificar que AGENTS.md tem schema version 1.0.0
+if grep -q 'governance-schema: 1.0.0' "$SCHEMA_PROJECT/AGENTS.md" 2>/dev/null; then
+  pass "schema-bump: AGENTS.md contém schema 1.0.0 apos install"
+else
+  fail "schema-bump: schema version ausente apos install"
+fi
+
+# Simular versao antiga no AGENTS.md do projeto (como se tivesse sido instalado com versao anterior)
+sed 's/governance-schema: 1.0.0/governance-schema: 0.9.0/' "$SCHEMA_PROJECT/AGENTS.md" > "$SCHEMA_PROJECT/AGENTS.md.tmp"
+mv "$SCHEMA_PROJECT/AGENTS.md.tmp" "$SCHEMA_PROJECT/AGENTS.md"
+
+if grep -q 'governance-schema: 0.9.0' "$SCHEMA_PROJECT/AGENTS.md"; then
+  pass "schema-bump: AGENTS.md downgraded para 0.9.0"
+else
+  fail "schema-bump: falha ao simular downgrade"
+fi
+
+# Rodar upgrade — deve regenerar AGENTS.md com schema atualizado
+bash "$UPGRADE_SCRIPT" "$SCHEMA_PROJECT" > /dev/null 2>&1
+
+if grep -q 'governance-schema: 1.0.0' "$SCHEMA_PROJECT/AGENTS.md" 2>/dev/null; then
+  pass "schema-bump: AGENTS.md atualizado para 1.0.0 apos upgrade"
+else
+  fail "schema-bump: schema version nao atualizado apos upgrade"
+fi
+
+# Verificar que o AGENTS.md nao tem placeholders remanescentes apos upgrade
+if grep -q '{{' "$SCHEMA_PROJECT/AGENTS.md" 2>/dev/null; then
+  fail "schema-bump: placeholders remanescentes apos upgrade"
+else
+  pass "schema-bump: sem placeholders apos upgrade"
+fi
+
+# ============================================================
 # Resumo
 # ============================================================
 echo ""

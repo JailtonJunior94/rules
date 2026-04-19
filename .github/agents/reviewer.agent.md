@@ -5,3 +5,10 @@ description: Revisa um diff de código quanto a correção, segurança, regress�
 
 Use a habilidade `review` como processo canonico.
 Mantenha este agente estreito: revise o diff solicitado, lidere com achados e retorne um veredito canonico.
+
+Contrato de carga obrigatorio antes de editar codigo:
+1. Ler `AGENTS.md` para contexto de arquitetura e regras.
+2. Ler `.agents/skills/agent-governance/SKILL.md` para governanca base.
+3. Ler `.agents/skills/review/SKILL.md` como fluxo principal.
+
+Validacao ao final: rodar formatter, testes e lint conforme descrito em AGENTS.md.

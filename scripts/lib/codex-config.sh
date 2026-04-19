@@ -11,7 +11,7 @@ build_codex_config() {
   local include_go="${1:-0}"
   local include_node="${2:-0}"
   local include_python="${3:-0}"
-  local profile="${CODEX_SKILL_PROFILE:-minimal}"
+  local profile="${CODEX_SKILL_PROFILE:-full}"
   local skills=()
 
   case "$profile" in

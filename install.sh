@@ -196,6 +196,8 @@ if [[ $INSTALL_CLAUDE -eq 1 ]]; then
   safe_mkdir "$PROJECT_DIR/.claude/hooks"
   safe_cp "$RULES_DIR/.claude/hooks/validate-governance.sh" "$PROJECT_DIR/.claude/hooks/"
   safe_cp "$RULES_DIR/.claude/hooks/validate-preload.sh" "$PROJECT_DIR/.claude/hooks/"
+  safe_mkdir "$PROJECT_DIR/scripts/lib"
+  safe_cp "$RULES_DIR/scripts/lib/parse-hook-input.sh" "$PROJECT_DIR/scripts/lib/"
   # Auto-configure hook in settings.local.json if not already present
   _settings_file="$PROJECT_DIR/.claude/settings.local.json"
   if [[ "$DRY_RUN" -eq 1 ]]; then

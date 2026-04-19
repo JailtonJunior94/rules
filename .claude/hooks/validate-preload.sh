@@ -16,26 +16,13 @@ set -euo pipefail
 
 GOVERNANCE_PRELOAD_MODE="${GOVERNANCE_PRELOAD_MODE:-warn}"
 
-input="$(cat)"
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=../../scripts/lib/parse-hook-input.sh
+source "$HOOK_DIR/../../scripts/lib/parse-hook-input.sh" 2>/dev/null \
+  || source "$(cd "$HOOK_DIR/../.." && pwd)/scripts/lib/parse-hook-input.sh" 2>/dev/null \
+  || { echo "AVISO: parse-hook-input.sh nao encontrado" >&2; exit 0; }
 
-# Extract file_path from tool input
-file_path=""
-if command -v python3 >/dev/null 2>&1; then
-  file_path="$(printf '%s' "$input" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    print(data.get('tool_input', data).get('file_path', ''))
-except Exception:
-    pass
-" 2>/dev/null || true)"
-elif command -v jq >/dev/null 2>&1; then
-  file_path="$(printf '%s' "$input" | jq -r '.tool_input.file_path // .file_path // empty' 2>/dev/null || true)"
-fi
-
-if [[ -z "$file_path" ]]; then
-  file_path="$(printf '%s' "$input" | grep -o '"file_path":"[^"]*"' 2>/dev/null | head -1 | sed 's/"file_path":"//;s/"//' || true)"
-fi
+file_path="$(cat | parse_file_path)"
 
 [[ -n "$file_path" ]] || exit 0
 
