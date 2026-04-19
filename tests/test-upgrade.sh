@@ -48,6 +48,22 @@ else
 fi
 
 # ============================================================
+# Caso 1b: skill opcional instalada continua sob gestao do upgrade
+# ============================================================
+mkdir -p "$PROJECT/.agents/skills/semantic-commit"
+cp -R "$ROOT_DIR/.agents/skills/semantic-commit/." "$PROJECT/.agents/skills/semantic-commit/"
+echo "# modificado" >> "$PROJECT/.agents/skills/semantic-commit/SKILL.md"
+
+output="$(bash "$UPGRADE_SCRIPT" --check "$PROJECT" 2>&1 || true)"
+if echo "$output" | grep -qi "CONTEUDO DIVERGENTE.*semantic-commit"; then
+  pass "optional-installed: --check detecta skill opcional instalada e divergente"
+else
+  fail "optional-installed: --check nao gerencia skill opcional instalada"
+fi
+
+bash "$UPGRADE_SCRIPT" "$PROJECT" > /dev/null 2>&1
+
+# ============================================================
 # Caso 2: conteudo divergente detectado
 # ============================================================
 echo "# modificado" >> "$PROJECT/.agents/skills/agent-governance/SKILL.md"

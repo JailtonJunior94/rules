@@ -20,6 +20,17 @@ source "$SOURCE_DIR/scripts/lib/codex-config.sh"
 
 CHECK_ONLY=0
 LANGS_FILTER=""
+BASE_SKILLS=(
+  agent-governance
+  analyze-project
+  bugfix
+  create-prd
+  create-tasks
+  create-technical-specification
+  execute-task
+  refactor
+  review
+)
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -70,6 +81,46 @@ should_process_skill() {
   return 0
 }
 
+add_expected_skill() {
+  local skill_name="$1"
+  local existing
+  [[ -n "$skill_name" ]] || return 0
+  [[ -d "$SOURCE_DIR/.agents/skills/$skill_name" ]] || return 0
+  for existing in "${EXPECTED_SKILLS[@]-}"; do
+    [[ "$existing" == "$skill_name" ]] && return 0
+  done
+  EXPECTED_SKILLS+=("$skill_name")
+}
+
+load_expected_skills() {
+  local skill path
+
+  for skill in "${BASE_SKILLS[@]}"; do
+    add_expected_skill "$skill"
+  done
+
+  if [[ -f "$PROJECT_DIR/AGENTS.md" ]]; then
+    while IFS= read -r path; do
+      skill="${path#.agents/skills/}"
+      skill="${skill%/SKILL.md}"
+      add_expected_skill "$skill"
+    done < <(grep -oE '\.agents/skills/[^`[:space:]]+/SKILL\.md' "$PROJECT_DIR/AGENTS.md" | LC_ALL=C sort -u || true)
+  fi
+
+  if [[ -f "$PROJECT_DIR/.codex/config.toml" ]]; then
+    while IFS= read -r path; do
+      skill="${path#.agents/skills/}"
+      add_expected_skill "$skill"
+    done < <(sed -n 's/^[[:space:]]*path[[:space:]]*=[[:space:]]*"\.agents\/skills\/\([^"]*\)".*/\1/p' "$PROJECT_DIR/.codex/config.toml" | LC_ALL=C sort -u || true)
+  fi
+
+  if [[ -d "$PROJECT_DIR/.agents/skills" ]]; then
+    while IFS= read -r skill; do
+      add_expected_skill "$skill"
+    done < <(find "$PROJECT_DIR/.agents/skills" -mindepth 1 -maxdepth 1 \( -type d -o -type l \) -exec basename {} \; | LC_ALL=C sort -u)
+  fi
+}
+
 PROJECT_DIR="${1:-.}"
 
 if [[ ! -d "$PROJECT_DIR" ]]; then
@@ -89,6 +140,9 @@ if [[ ! -d "$PROJECT_DIR/.agents/skills" ]]; then
   echo "Execute install.sh primeiro."
   exit 1
 fi
+
+EXPECTED_SKILLS=()
+load_expected_skills
 
 extract_version() {
   local file="$1"
@@ -185,8 +239,8 @@ echo "Verificando skills em: $PROJECT_DIR"
 echo "Fonte: $SOURCE_DIR"
 echo ""
 
-for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
-  skill_name="$(basename "$(dirname "$source_skill")")"
+while IFS= read -r skill_name; do
+  source_skill="$SOURCE_DIR/.agents/skills/$skill_name/SKILL.md"
 
   # Aplicar filtro de linguagem quando --langs foi informado
   if ! should_process_skill "$skill_name"; then
@@ -250,7 +304,7 @@ for source_skill in "$SOURCE_DIR/.agents/skills"/*/SKILL.md; do
     cp -R "$SOURCE_DIR/.agents/skills/$skill_name" "$PROJECT_DIR/.agents/skills/$skill_name"
     echo "    -> atualizado"
   fi
-done
+done < <(printf '%s\n' "${EXPECTED_SKILLS[@]-}" | sed '/^$/d' | LC_ALL=C sort -u)
 
 echo ""
 echo "Resumo: $UP_TO_DATE atualizadas, $OUTDATED desatualizadas ($REFS_DIVERGENT refs divergentes), $MISSING ausentes"
