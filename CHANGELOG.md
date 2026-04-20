@@ -7,6 +7,8 @@ e o versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-20
+
 ### Added
 - Skill `execute-task-all` para execucao sequencial de todas as tasks elegiveis de um `tasks/prd-<feature-slug>/tasks.md` com fluxo completo (execute-task, review, bugfix, evidencias)
 - Script `scripts/loop-execute-tasks.sh`: orquestrador externo de loop de tasks, invocando o CLI de IA como processo separado por task (contexto limpo por iteracao)
