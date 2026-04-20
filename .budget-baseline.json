@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-04-20",
+  "threshold_pct": 5,
+  "baselines": {
+    "go": {
+      "tokens_est": 5353,
+      "files": [
+        "AGENTS.md",
+        ".agents/skills/agent-governance/SKILL.md",
+        ".agents/skills/go-implementation/SKILL.md",
+        ".agents/skills/go-implementation/references/architecture.md"
+      ]
+    },
+    "node": {
+      "tokens_est": 4722,
+      "files": [
+        "AGENTS.md",
+        ".agents/skills/agent-governance/SKILL.md",
+        ".agents/skills/node-implementation/SKILL.md",
+        ".agents/skills/node-implementation/references/architecture.md"
+      ]
+    },
+    "python": {
+      "tokens_est": 4675,
+      "files": [
+        "AGENTS.md",
+        ".agents/skills/agent-governance/SKILL.md",
+        ".agents/skills/python-implementation/SKILL.md",
+        ".agents/skills/python-implementation/references/architecture.md"
+      ]
+    }
+  },
+  "flows": {
+    "execute-task (Go)": {
+      "tokens_est": 7640
+    },
+    "execute-task (Node)": {
+      "tokens_est": 7009
+    },
+    "execute-task (Python)": {
+      "tokens_est": 6962
+    }
+  }
+}

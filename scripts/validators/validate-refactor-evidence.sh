@@ -8,6 +8,9 @@ set -euo pipefail
 
 export LC_ALL=C
 
+# shellcheck source=scripts/lib/validator-patterns.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/validator-patterns.sh"
+
 if [[ $# -ne 1 ]]; then
   echo "Uso: $0 <refactor_report.md>"
   exit 2
@@ -82,17 +85,17 @@ require_content_after_heading() {
 }
 
 # Secoes obrigatorias
-require_heading "escopo"                      "seção Escopo"
-require_heading "invariantes"                 "seção Invariantes Preservadas"
-require_heading "mudanc"                      "seção Mudanças"
-require_heading "comandos executados"         "seção Comandos Executados"
-require_heading "resultados de validac"       "seção Resultados de Validação"
-require_heading "riscos residuais"            "seção Riscos Residuais"
+require_heading "$PATTERN_ESCOPO"              "seção Escopo"
+require_heading "$PATTERN_INVARIANTES"         "seção Invariantes Preservadas"
+require_heading "$PATTERN_MUDANCAS"            "seção Mudanças"
+require_heading "$PATTERN_COMANDOS_EXECUTADOS" "seção Comandos Executados"
+require_heading "$PATTERN_RESULTADOS_VALIDACAO" "seção Resultados de Validação"
+require_heading "$PATTERN_RISCOS_RESIDUAIS"    "seção Riscos Residuais"
 
 # Validacao semantica: secoes criticas devem ter conteudo real
-require_content_after_heading "mudanc" "seção Mudanças"
-require_content_after_heading "comandos executados" "seção Comandos Executados"
-require_content_after_heading "invariantes" "seção Invariantes Preservadas"
+require_content_after_heading "$PATTERN_MUDANCAS" "seção Mudanças"
+require_content_after_heading "$PATTERN_COMANDOS_EXECUTADOS" "seção Comandos Executados"
+require_content_after_heading "$PATTERN_INVARIANTES" "seção Invariantes Preservadas"
 
 # Modo documentado
 require_pattern "Modo[[:space:]]*:[[:space:]]*(advisory|execution)" \

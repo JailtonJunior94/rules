@@ -29,6 +29,16 @@ on:
         required: false
         type: number
         default: 15000
+      budget-regression-threshold:
+        description: "Threshold percentual para regressao de token budget (default: usa valor do .budget-baseline.json)"
+        required: false
+        type: number
+        default: 5
+      check-budget-regression:
+        description: "Verificar regressao de token budget contra baseline commitado"
+        required: false
+        type: boolean
+        default: true
       validate-evidence:
         description: "Validar execution reports encontrados"
         required: false
@@ -41,6 +51,11 @@ on:
         default: true
       check-rf-coverage:
         description: "Verificar cobertura de RF em tasks/"
+        required: false
+        type: boolean
+        default: true
+      check-task-completion:
+        description: "Verificar que tasks done possuem execution reports validos"
         required: false
         type: boolean
         default: true
@@ -212,6 +227,26 @@ jobs:
             fi
           done
 
+      - name: Setup Python
+        if: inputs.check-budget-regression
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        if: inputs.check-budget-regression
+        run: pip install tiktoken
+
+      - name: Budget regression
+        if: inputs.check-budget-regression
+        run: |
+          echo "=== Budget regression ==="
+          args="--committed-only"
+          if [[ "${{ inputs.budget-regression-threshold }}" -gt 0 ]]; then
+            args="$args --threshold ${{ inputs.budget-regression-threshold }}"
+          fi
+          bash scripts/check-budget-regression.sh $args
+
       - name: Validate evidence reports
         if: inputs.validate-evidence
         run: |
@@ -237,3 +272,22 @@ jobs:
           done
 
           echo "Reports: $reports_found encontrado(s), $reports_valid valido(s), $reports_invalid com aviso(s)"
+
+      - name: Task completion gate
+        if: inputs.check-task-completion
+        run: |
+          echo "=== Gate de conclusao de tasks ==="
+          violations=0
+
+          for tasks_dir in $(find . -path '*/tasks/*/tasks.md' 2>/dev/null | xargs -I{} dirname {}); do
+            echo "Verificando $tasks_dir..."
+            if ! bash scripts/check-task-completion.sh "$tasks_dir" 2>&1; then
+              violations=$((violations + 1))
+            fi
+          done
+
+          if [[ "$violations" -gt 0 ]]; then
+            echo "FALHA: $violations diretorio(s) com tasks done sem report valido"
+            exit 1
+          fi
+          echo "Gate de conclusao de tasks passou."

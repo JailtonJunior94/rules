@@ -272,7 +272,71 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 9. check-invocation-depth.sh existe
+# 9. compute-spec-hash.sh: helper cross-platform
+# ---------------------------------------------------------------------------
+echo "=== compute-spec-hash.sh ==="
+
+HASH_HELPER="$ROOT_DIR/scripts/lib/compute-spec-hash.sh"
+
+if [[ -f "$HASH_HELPER" ]]; then
+  pass "compute-spec-hash: script existe"
+else
+  fail "compute-spec-hash: script ausente em scripts/lib/compute-spec-hash.sh"
+fi
+
+if [[ -x "$HASH_HELPER" ]]; then
+  pass "compute-spec-hash: script e executavel"
+else
+  fail "compute-spec-hash: script nao e executavel"
+fi
+
+# Arquivo ausente deve retornar exit != 0
+hash_missing_exit=0
+bash "$HASH_HELPER" "$tmpdir/nonexistent.md" 2>/dev/null || hash_missing_exit=$?
+if [[ "$hash_missing_exit" -ne 0 ]]; then
+  pass "compute-spec-hash/missing-file: exit != 0 para arquivo inexistente"
+else
+  fail "compute-spec-hash/missing-file: deveria falhar para arquivo inexistente"
+fi
+
+# Sem argumento deve retornar exit != 0
+hash_noarg_exit=0
+bash "$HASH_HELPER" 2>/dev/null || hash_noarg_exit=$?
+if [[ "$hash_noarg_exit" -ne 0 ]]; then
+  pass "compute-spec-hash/no-arg: exit != 0 sem argumento"
+else
+  fail "compute-spec-hash/no-arg: deveria falhar sem argumento"
+fi
+
+# Hash de arquivo real deve ter 8 chars hexadecimais
+hash_input="$tmpdir/hash-input.md"
+echo "# Conteudo de teste para hash" > "$hash_input"
+hash_result="$(bash "$HASH_HELPER" "$hash_input" 2>/dev/null || true)"
+if [[ "${#hash_result}" -eq 8 ]] && echo "$hash_result" | grep -Eq '^[a-f0-9]{8}$'; then
+  pass "compute-spec-hash/output: retorna 8 chars hexadecimais"
+else
+  fail "compute-spec-hash/output: esperado 8 chars hex, obtido '${hash_result}'"
+fi
+
+# Hash deve ser determinístico (mesmo arquivo = mesmo hash)
+hash_result2="$(bash "$HASH_HELPER" "$hash_input" 2>/dev/null || true)"
+if [[ "$hash_result" == "$hash_result2" ]]; then
+  pass "compute-spec-hash/deterministic: mesmo arquivo produz mesmo hash"
+else
+  fail "compute-spec-hash/deterministic: hash nao e determinístico"
+fi
+
+# Hash deve mudar quando o conteudo muda
+echo "# Conteudo diferente" > "$hash_input"
+hash_result3="$(bash "$HASH_HELPER" "$hash_input" 2>/dev/null || true)"
+if [[ "$hash_result" != "$hash_result3" ]]; then
+  pass "compute-spec-hash/sensitivity: hash muda com conteudo diferente"
+else
+  fail "compute-spec-hash/sensitivity: hash nao mudou apos alteracao de conteudo"
+fi
+
+# ---------------------------------------------------------------------------
+# 10. check-invocation-depth.sh existe
 # ---------------------------------------------------------------------------
 echo "=== Invocation depth script ==="
 

@@ -1,3 +1,6 @@
+<!-- spec-hash-prd: {{SPEC_HASH_PRD}} -->
+<!-- spec-hash-techspec: {{SPEC_HASH_TECHSPEC}} -->
+
 # Resumo das Tarefas de Implementação para [Funcionalidade]
 
 ## Metadados

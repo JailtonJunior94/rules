@@ -16,7 +16,7 @@
 ## Arquivos Alterados
 - [caminho]
 
-## Resultados de Validação
+## Resultados de Validacao
 - Testes: pass | fail | blocked
 - Lint: pass | fail | blocked
 - Veredito do Revisor: APPROVED | APPROVED_WITH_REMARKS | REJECTED | BLOCKED
@@ -26,8 +26,8 @@
 |-------|-----------|-----------------|
 | RF-NN | [descricao da evidencia que comprova o requisito] | [documento.md:NN ou n/a] |
 
-## Suposições
-- [suposição]
+## Suposicoes
+- [suposicao]
 
 ## Riscos Residuais
 - [risco]

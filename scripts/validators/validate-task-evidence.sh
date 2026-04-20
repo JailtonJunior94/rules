@@ -4,6 +4,9 @@ set -euo pipefail
 
 export LC_ALL=C
 
+# shellcheck source=scripts/lib/validator-patterns.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/validator-patterns.sh"
+
 if [[ $# -ne 1 ]]; then
   echo "Uso: $0 <relatorio-execucao-tarefa.md>"
   exit 2
@@ -82,21 +85,21 @@ require_content_after_heading() {
 }
 
 # Contexto carregado (PRD e TechSpec) — exigir como heading Markdown
-require_heading "contexto carregado" "seção Contexto Carregado"
+require_heading "$PATTERN_CONTEXTO_CARREGADO" "seção Contexto Carregado"
 require_pattern "PRD[[:space:]]*:" "referência ao PRD consultado"
 require_pattern "TechSpec[[:space:]]*:" "referência à TechSpec consultada"
 
 # Seções obrigatórias — exigir como heading Markdown
-require_heading "comandos executados" "seção Comandos Executados"
-require_heading "arquivos alterados" "seção Arquivos Alterados"
-require_heading "resultados de validac" "seção Resultados de Validação"
-require_heading "suposic" "seção Suposições"
-require_heading "riscos residuais" "seção Riscos Residuais"
+require_heading "$PATTERN_COMANDOS_EXECUTADOS" "seção Comandos Executados"
+require_heading "$PATTERN_ARQUIVOS_ALTERADOS" "seção Arquivos Alterados"
+require_heading "$PATTERN_RESULTADOS_VALIDACAO" "seção Resultados de Validação"
+require_heading "$PATTERN_SUPOSICOES" "seção Suposições"
+require_heading "$PATTERN_RISCOS_RESIDUAIS" "seção Riscos Residuais"
 
 # Validacao semantica: secoes criticas devem ter conteudo real
-require_content_after_heading "comandos executados" "seção Comandos Executados"
-require_content_after_heading "arquivos alterados" "seção Arquivos Alterados"
-require_content_after_heading "resultados de validac" "seção Resultados de Validação"
+require_content_after_heading "$PATTERN_COMANDOS_EXECUTADOS" "seção Comandos Executados"
+require_content_after_heading "$PATTERN_ARQUIVOS_ALTERADOS" "seção Arquivos Alterados"
+require_content_after_heading "$PATTERN_RESULTADOS_VALIDACAO" "seção Resultados de Validação"
 
 # Exigir um estado terminal canônico
 if ! grep -Eiq "estado[[:space:]]*:[[:space:]]*(blocked|failed|done)" "$report_file"; then

@@ -8,13 +8,13 @@
 ## Invariantes Preservadas
 - [invariante]
 
-## Mudanças Propostas ou Aplicadas
+## Mudancas Propostas ou Aplicadas
 - [mudança]
 
 ## Comandos Executados
 - [comando] -> [resultado]
 
-## Resultados de Validação
+## Resultados de Validacao
 - Testes: pass | fail | blocked | n/a
 - Lint: pass | fail | blocked | n/a
 - Veredito do Revisor: APPROVED | APPROVED_WITH_REMARKS | REJECTED | BLOCKED | n/a

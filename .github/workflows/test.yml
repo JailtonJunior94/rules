@@ -37,6 +37,10 @@ jobs:
           - copilot-e2e
           - codex-e2e
           - harness-execution
+          - enforcement-fallback
+          - template-contract
+          - budget-regression
+          - task-completion
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +51,12 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install tiktoken
+
+      - name: Setup Go
+        if: matrix.suite == 'harness-execution'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
 
       - name: Install bats-core
         if: matrix.suite == 'mutation'

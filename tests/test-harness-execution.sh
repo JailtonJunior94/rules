@@ -56,7 +56,7 @@ for go_fixture in "$FIXTURES_DIR"/go-*; do
       if (cd "$go_fixture" && go vet ./... 2>/dev/null); then
         pass "go-vet/$fixture_name: go vet passou"
       else
-        skip "go-vet/$fixture_name: go vet falhou (dependencias possivelmente ausentes)"
+        fail "go-vet/$fixture_name: go vet falhou (fixtures devem ser self-contained)"
       fi
     else
       skip "go-vet/$fixture_name: go nao instalado"

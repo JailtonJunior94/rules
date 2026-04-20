@@ -12,6 +12,9 @@ set -euo pipefail
 
 export LC_ALL=C
 
+# shellcheck source=scripts/lib/validator-patterns.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/validator-patterns.sh"
+
 rf_ids=()
 
 while [[ $# -gt 0 ]]; do
@@ -109,13 +112,13 @@ require_content_after_heading() {
 }
 
 # Secoes obrigatorias
-require_heading "bugs"                  "seção Bugs"
-require_heading "comandos executados"   "seção Comandos Executados"
-require_heading "riscos residuais"      "seção Riscos Residuais"
+require_heading "$PATTERN_BUGS"               "seção Bugs"
+require_heading "$PATTERN_COMANDOS_EXECUTADOS" "seção Comandos Executados"
+require_heading "$PATTERN_RISCOS_RESIDUAIS"   "seção Riscos Residuais"
 
 # Validacao semantica: secoes criticas devem ter conteudo real
-require_content_after_heading "bugs" "seção Bugs"
-require_content_after_heading "comandos executados" "seção Comandos Executados"
+require_content_after_heading "$PATTERN_BUGS" "seção Bugs"
+require_content_after_heading "$PATTERN_COMANDOS_EXECUTADOS" "seção Comandos Executados"
 
 # Cada entrada de bug deve ter estado canonico
 require_pattern "Estado[[:space:]]*:[[:space:]]*(fixed|blocked|skipped|failed)" \

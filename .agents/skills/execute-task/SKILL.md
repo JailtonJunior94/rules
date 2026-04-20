@@ -51,6 +51,7 @@ description: Executa uma tarefa de implementação aprovada por meio de codifica
 3. Salvar o relatório como `tasks/prd-<feature-slug>/[num]_execution_report.md`.
 4. Rodar `.claude/scripts/validate-task-evidence.sh` contra o relatório salvo.
 5. Se o validador de evidências falhar, retornar `blocked` e descrever a evidência ausente.
+6. Antes de marcar a task como `done` em `tasks.md`, executar `bash scripts/check-task-completion.sh tasks/prd-<feature-slug>/` — parar com `blocked` se houver violações.
 
 **Etapa 6: Encerrar explicitamente**
 1. Informar o status da tarefa, os resultados de validação, o veredito do revisor e o caminho do relatório.
